@@ -19,19 +19,16 @@ Owners:
 
 
 Carers:
-1. Each owner can have only one credit card recorded in the system, and each credit card must belong to only one owner.
+1. A carer can be either a full time carer or a part time carer. (Covering and Non-Overlapping)
 
 
-2. A carer can be either a full time carer or a part time carer. (Covering and Non-Overlapping)
+2. A full time carer can apply any number of leave and each leave should belong to only  one full time carer. (provided the full-time carer still work for a minimum of 2 × 150 consecutive days a year after the leave)
 
 
-3. A full time carer can apply any number of leave and each leave should belong to only  one full time carer. (provided the full-time carer still work for a minimum of 2 × 150 consecutive days a year after the leave)
+3. A part-time carer can indicate more than one availability. 
 
 
-4. A part-time carer can indicate more than one availability. 
-
-
-5. A carer can take care of any number of categories. A category can be taken care of by any number of carers. 
+4. A carer can take care of any number of categories. A category can be taken care of by any number of carers. 
 
 
 Pet:
