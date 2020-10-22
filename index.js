@@ -8,7 +8,23 @@ const pool = require("./db");
 app.use(express.json()); //req.body
 
 //ROUTES//
+app.get("/accounts", async (req, res) => {
+  try {
+    const allAccounts = await pool.query("SELECT * FROM accounts");
+    res.json(allAccounts.rows);
+  } catch (err) {
+    console.error(ee.message);
+  }
+})
 
+app.get("/admin", async (req, res) => {
+  try {
+    const allAdmin = await pool.query("SELECT * FROM admin");
+    res.json(allAdmin.rows);
+  } catch (err) {
+    console.error(ee.message);
+  }
+})
 //create a todo
 
 app.post("/todos", async (req, res) => {
