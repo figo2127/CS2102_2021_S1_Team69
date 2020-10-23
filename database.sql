@@ -20,6 +20,19 @@ CREATE TABLE admin(
 	PRIMARY KEY(account_username)
 );
 
+CREATE TABLE categories (
+	category_name VARCHAR(20) PRIMARY KEY,
+	base_price NUMERIC(5,2) NOT NULL
+);
+
+CREATE TABLE pets (
+	pname VARCHAR(20) NOT NULL,
+	owner_username VARCHAR(20) NOT NULL REFERENCES owners(username),
+	requirements TEXT,
+	belongs VARCHAR(20) NOT NULL REFERENCES categories(category_name),
+	PRIMARY KEY(pname, owner_username)
+);
+
 INSERT INTO accounts VALUES 
 ('gycc', '123456', 'Guo Yichao', '86561895', 'West', 'Temasek Hall, 12 Kent Ridge Drive'),
 ('dearvae', '123456', 'Li Beining', '83940829', 'North', '26 Clementi Road'),
@@ -31,3 +44,21 @@ INSERT INTO accounts VALUES
 INSERT INTO admin VALUES
 ('adi'),
 ('zz');
+
+INSERT INTO categories VALUES
+('Bird', 40.00),
+('Cat', 50.00),
+('Chinchilla', 40.00),
+('Dog', 50.00),
+('Fish', 35.00),
+('Frog', 35.00),
+('Guinea Pig', 45.00),
+('Hamster', 30.00),
+('Mouse', 30.00),
+('Pig', 50.00),
+('Rabbit', 40.00),
+('Rat', 30.00),
+('Snake', 80.00),
+('Spider', 75.00),
+('Turtle', 30.00),
+('Tortoise', 30.00);
