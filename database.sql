@@ -33,12 +33,30 @@ CREATE TABLE pets (
 	PRIMARY KEY(pname, owner_username)
 );
 
+CREATE TABLE carers (
+	number_pets INT,
+	rating DOUBLE(1, 2);
+	status BOOL
+);
+
+CREATE TABLE availability (
+	start_date DATETIME(0) NOT NULL,
+	end_date DATETIME(0) NOT NULL,
+	carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
+	indicate VARCHAR(20) NOT NULL REFERENCES carers(status),
+	PRIMARY KEY(carer_username, start_date, end_date)
+);
+
+
+
+
+
 INSERT INTO accounts VALUES 
 ('gycc', '123456', 'Guo Yichao', '86561895', 'West', 'Temasek Hall, 12 Kent Ridge Drive'),
 ('dearvae', '123456', 'Li Beining', '83940829', 'North', '26 Clementi Road'),
 ('adi', '123456', 'Adi Yoga', '98394292', 'West', '35 Clementi Road'),
 ('zz', '123456', 'Zheng Zhi', '92839040', 'North', '23 Bedok Central'),
-('figo', '123456', 'Li Zexin', '82038401', 'South', 'PGP'),
+('figo', '123456', 'Lee Ze Xin', '82038401', 'South', 'PGP'),
 ('jy', '123456', 'Jiaying', '91084982', 'South', 'PGP');
 
 INSERT INTO admin VALUES
