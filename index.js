@@ -205,6 +205,78 @@ app.delete("/categories/:category_name", async (req, res) => {
   }
 });
 
+// create/add creditcard
+app.post("/creditcard/create", async (req, res) => {
+  try {
+    const {
+      username,
+      credit_card_num,
+      expiry_date,
+      cvv
+    } = req.body;
+    const result = await pool.query(
+      "INSERT INTO credit_card (owner_username, credit_card_num, expiry_date, cvv) VALUES($1, $2, $3, $4);",
+      [username, credit_card_num, expiry_date, cvv]
+    );
+    res.send("Credit Card added successfully!");
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+// retrieve creditcard info
+app.post("/creditcard/read", async (req, res) => {
+  try {
+    const {
+      username,
+      credit_card_num
+    } = req.body;
+    const result = await pool.query(
+      "SELECT * FROM credit_card WHERE owner_username = $1 AND credit_card_num = $2;",
+      [username, credit_card_num]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+// update creditcard info
+app.put("/creditcard/update", async (req, res) => {
+  try {
+    const {
+      username,
+      credit_card_num,
+      expiry_date,
+      cvv
+    } = req.body;
+    const result = await pool.query(
+      "UPDATE credit_card SET expiry_date = $1, cvv = $2 WHERE owner_username = $3 AND credit_card_num = $4;",
+      [expiry_date, cvv, username, credit_card_num]
+    );
+    res.send("Credit Card info updated!");
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+// delete creditcard
+app.delete("/creditcard/delete", async (req, res) => {
+  try {
+    const {
+      username,
+      credit_card_num
+    } = req.body;
+    const result = await pool.query(
+      "DELETE FROM credit_card WHERE owner_username = $1 AND credit_card_num = $2;",
+      [username, credit_card_num]
+    );
+    res.send("Credit Card removed successfully!");
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });

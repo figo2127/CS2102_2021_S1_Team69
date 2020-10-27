@@ -27,7 +27,7 @@ CREATE TABLE categories (
 
 CREATE TABLE pets (
 	pname VARCHAR(20) NOT NULL,
-	owner_username VARCHAR(20) NOT NULL REFERENCES owners(username),
+	owner_username VARCHAR(20) NOT NULL REFERENCES owners(username) ON DELETE CASCADE,
 	requirements TEXT,
 	belongs VARCHAR(20) NOT NULL REFERENCES categories(category_name),
 	PRIMARY KEY(pname, owner_username)
