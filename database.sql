@@ -1,79 +1,104 @@
+
 CREATE DATABASE petcaringdb;
 
-CREATE TABLE todo(
-  todo_id SERIAL PRIMARY KEY,
-  description VARCHAR(255)
-);
+DROP TABLE IF EXISTS carers;
+DROP TABLE IF EXISTS owners;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS pets;
+DROP TABLE IF EXISTS credit_cards;
+DROP TABLE IF EXISTS takes_care;
 
 CREATE TABLE accounts(
-	username VARCHAR(20) NOT NULL,
-	password VARCHAR(20) NOT NULL,
-	name VARCHAR(30) NOT NULL,
-	phone VARCHAR(20) NOT NULL,
-	area VARCHAR(5),
-	address VARCHAR(80),
-	PRIMARY KEY(username)
+ username VARCHAR(20) NOT NULL,
+ password VARCHAR(20) NOT NULL,
+ name VARCHAR(30) NOT NULL,
+ phone VARCHAR(20) NOT NULL,
+ area VARCHAR(5),
+ address VARCHAR(80),
+ PRIMARY KEY(username)
 );
 
-CREATE TABLE admin(
-	account_userName VARCHAR(20) NOT NULL REFERENCES accounts(username),
-	PRIMARY KEY(account_username)
+CREATE TABLE admins(
+ admin_name VARCHAR(20) NOT NULL REFERENCES accounts(username),
+ PRIMARY KEY(admin_name)
+);
+
+CREATE TABLE owners(
+	owner_name VARCHAR(20) NOT NULL REFERENCES accounts(username) ON DELETE Cascade,
+ PRIMARY KEY(owner_name)
 );
 
 CREATE TABLE categories (
-	category_name VARCHAR(20) PRIMARY KEY,
-	base_price NUMERIC(5,2) NOT NULL
+ category_name VARCHAR(20) PRIMARY KEY,
+ base_price NUMERIC(5,2) NOT NULL
 );
 
-CREATE TABLE pets (
-	pname VARCHAR(20) NOT NULL,
-	owner_username VARCHAR(20) NOT NULL REFERENCES owners(username) ON DELETE CASCADE,
-	requirements TEXT,
-	belongs VARCHAR(20) NOT NULL REFERENCES categories(category_name),
-	PRIMARY KEY(pname, owner_username)
+CREATE TABLE pets(
+ pname VARCHAR(20) NOT NULL,
+ owner_name VARCHAR(20) NOT NULL REFERENCES owners(owner_name) ON DELETE CASCADE,
+ requirements TEXT,
+ belongs VARCHAR(20) NOT NULL REFERENCES categories(category_name),
+ PRIMARY KEY(pname, owner_name)
 );
 
-CREATE TABLE carers (
-	username VARCHAR(20) NOT NULL REFERENCES accounts(username),
-	category VARCHAR(20) NOT NULL REFERENCES categories(category_name),
-	number_pets INT,
-	rating NUMERIC(3, 2),
-	isFullTime BOOL,
-	PRIMARY KEY(username)
+CREATE TABLE credit_cards(
+    owner_name VARCHAR(20) REFERENCES owners(owner_name) ON DELETE Cascade,
+    credit_card_num VARCHAR(16) NOT NULL,
+    cvv INTEGER NOT NULL,
+    expiry_date DATE NOT NULL,
+    PRIMARY KEY(owner_name, credit_card_num)
 );
 
-CREATE TABLE availability (
-	available_date DATETIME(0) NOT NULL,
-	carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
-	PRIMARY KEY(available_date, carer_username)
-	-- ON DELETE CASCAdssasasa
+CREATE TABLE carers(
+ carer_name VARCHAR(20) NOT NULL REFERENCES accounts(username),
+ number_pets INT,
+ rating NUMERIC(3, 2),
+ isFullTime BOOL,
+ PRIMARY KEY(carer_name)
 );
 
-CREATE TABLE availability_bid (
-	available_date DATETIME(0) NOT NULL,
-	carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
-    owner_username VARCHAR(20) NOT NULL REFERENCES owners(username),
-    pname VARCHAR(20) NOT NULL REFERENCES pet(pname),
-	PRIMARY KEY(available_date, carer_username)
+CREATE TABLE takes_care (
+	carer_name VARCHAR(20) NOT NULL REFERENCES carers(carer_name),
+	category_name VARCHAR(20) NOT NULL REFERENCES categories(category_name),
+	PRIMARY KEY(carer_name, category_name)
 );
 
--- bids table
-CREATE TABLE bids(
-  carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
-  owner_username VARCHAR(20) NOT NULL REFERENCES owners(username),
-  pname VARCHAR(20) NOT NULL REFERENCES pet(pname),
-  bid_date DATE NOT NULL,
-  price NUMBER NOT NULL,
-  is_sucessful INTEGER NULL,
-  credit_card_num VARCHAR(16),
-  payment_date DATE NOT NULL,
-  payment_mode VARCHAR(50) NOT NULL,
-  delivery_method VARCHAR(50) NOT NULL,
-  review_rating INTEGER NULL,
-  review_content VARCHAR(500) NULL,
-  review_date DATE NOT NULL,
-  PRIMARY KEY(carer_username, owner_username, pname)
-);
+-- CREATE TABLE availability (
+--  available_date timestamp(0) NOT NULL,
+--  carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
+--  PRIMARY KEY(available_date, carer_username)
+--  -- ON DELETE CASCAdssasasa
+-- );
+
+-- CREATE TABLE availability_bid (
+--  available_date timestamp(0) NOT NULL,
+--  carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
+--     owner_username VARCHAR(20) NOT NULL,
+--     pname VARCHAR(20) NOT NULL,
+--     FOREIGN KEY (owner_username, pname) REFERENCES pets(owner_userName, pname),
+--  PRIMARY KEY(available_date, carer_username)
+-- );
+
+-- -- bids table
+-- CREATE TABLE bids(
+--   carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
+--   owner_username VARCHAR(20) NOT NULL REFERENCES owners(owner_userName),
+--   pname VARCHAR(20) NOT NULL,
+--   bid_date DATE NOT NULL,
+--   price NUMERIC NOT NULL,
+--   is_sucessful INTEGER NULL,
+--   credit_card_num VARCHAR(16),
+--   payment_date DATE NOT NULL,
+--   payment_mode VARCHAR(50) NOT NULL,
+--   delivery_method VARCHAR(50) NOT NULL,
+--   review_rating INTEGER NULL,
+--   review_content VARCHAR(500) NULL,
+--   review_date DATE NOT NULL,
+--   PRIMARY KEY(carer_username, owner_username, pname),
+--   FOREIGN KEY (owner_username, pname) REFERENCES pets(owner_userName, pname)
+-- );
 
 INSERT INTO accounts VALUES 
 ('gycc', '123456', 'Guo Yichao', '86561895', 'West', 'Temasek Hall, 12 Kent Ridge Drive'),
@@ -83,9 +108,17 @@ INSERT INTO accounts VALUES
 ('figo', '123456', 'Lee Ze Xin', '82038401', 'South', 'PGP'),
 ('jy', '123456', 'Jiaying', '91084982', 'South', 'PGP');
 
-INSERT INTO admin VALUES
+INSERT INTO admins VALUES
 ('adi'),
 ('zz');
+
+INSERT INTO owners VALUES
+('dearvae'),
+('gycc');
+
+INSERT INTO carers VALUES
+('zz'),
+('gycc');
 
 INSERT INTO categories VALUES
 ('Bird', 40.00),
@@ -105,7 +138,10 @@ INSERT INTO categories VALUES
 ('Turtle', 30.00),
 ('Tortoise', 30.00);
 
-
+INSERT INTO credit_cards VALUES
+('dearvae', '2453738493331111', 333, '2022-01-01'),
+('dearvae', '2453738493331112', 333, '2022-01-01'),
+('gycc','4357876544441111', 444, '2023-01-04');
 
 
 -- api needed:
