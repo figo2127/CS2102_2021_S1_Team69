@@ -160,6 +160,7 @@ INSERT INTO credit_cards VALUES
 -- 14.getCarerBy username(rating, category) (Figo)
 -- getReviews by carername
 
+
 -- Admin:
 -- 15,16,17,18.CRUD category (Beining)
 
@@ -199,3 +200,12 @@ INSERT INTO credit_cards VALUES
 -- (b) Other Pet Owner nearby.
 -- (c) Their Pet information.
 -- (d) etc.
+
+1. filter carer by pet category
+2. sort carer by price 
+3. rank owner's money spend per month
+4. get all review for a carer sort by date
+5. get all review for a carer sort by star
+6. get all review given by a owner sort by date
+7. get number of petday for all carer in ($x) month 
+8. get number of petday by carer_name in ($x) month

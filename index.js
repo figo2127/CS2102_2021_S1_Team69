@@ -86,7 +86,7 @@ app.get("/accounts/login", async (req, res) => {
  * return combined json result from accounts table and owners table
  * Unchecked due to no owner table created yet
  */
-app.get("/owners/getOwnerInfo", async (req, res) => {
+app.get("/owners/:username", async (req, res) => {
   try {
     const { username } = req.body;
     const result = await pool.query(
@@ -108,7 +108,7 @@ app.get("/owners/getOwnerInfo", async (req, res) => {
 /**
  * Unchecked due to no owner table created yet
  */
-app.put("/owners/updateOwnerInfo", async (req, res) => {
+app.put("/owners/:username", async (req, res) => {
   try {
     const { username } = req.params;
     const { password, name, phone, area, address } = req.body;
@@ -206,7 +206,7 @@ app.delete("/categories/:category_name", async (req, res) => {
 });
 
 // create/add creditcard
-app.post("/creditcard/create", async (req, res) => {
+app.post("/creditcard", async (req, res) => {
   try {
     const {
       username,
@@ -225,15 +225,12 @@ app.post("/creditcard/create", async (req, res) => {
 })
 
 // retrieve creditcard info
-app.post("/creditcard/read", async (req, res) => {
+app.get("/creditcard/:owner_name", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num
-    } = req.body;
+    const { owner_name } = req.params;
     const result = await pool.query(
-      "SELECT * FROM credit_card WHERE owner_username = $1 AND credit_card_num = $2;",
-      [username, credit_card_num]
+      "SELECT * FROM credit_card WHERE owner_username = $1;",
+      [owner_name]
     );
     res.json(result.rows);
   } catch (err) {
@@ -242,14 +239,9 @@ app.post("/creditcard/read", async (req, res) => {
 })
 
 // update creditcard info
-app.put("/creditcard/update", async (req, res) => {
+app.put("/creditcard/:credit_card_num", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num,
-      expiry_date,
-      cvv
-    } = req.body;
+    const { username, credit_card_num, expiry_date, cvv } = req.body;
     const result = await pool.query(
       "UPDATE credit_card SET expiry_date = $1, cvv = $2 WHERE owner_username = $3 AND credit_card_num = $4;",
       [expiry_date, cvv, username, credit_card_num]
@@ -263,10 +255,7 @@ app.put("/creditcard/update", async (req, res) => {
 // delete creditcard
 app.delete("/creditcard/delete", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num
-    } = req.body;
+    const { username, credit_card_num } = req.body;
     const result = await pool.query(
       "DELETE FROM credit_card WHERE owner_username = $1 AND credit_card_num = $2;",
       [username, credit_card_num]
@@ -278,7 +267,7 @@ app.delete("/creditcard/delete", async (req, res) => {
 })
 
 // get list of carers
-app.get("/carers/getListOfCarer", async (req, res) => {
+app.get("/carers/get-list-of-carer", async (req, res) => {
   try {
     const allCarers = await pool.query(
       "SELECT * FROM carers"
@@ -289,7 +278,7 @@ app.get("/carers/getListOfCarer", async (req, res) => {
   }
 })
 
-app.get("/carers/getCarerBy", async (req, res) => {
+app.get("/carers/get-carer-by", async (req, res) => {
   try {
     const { rating, category } = req.body;
     const result = await pool.query(
@@ -307,11 +296,11 @@ app.get("/carers/getCarerBy", async (req, res) => {
 })
 
 
-app.get("/carers/getReviewsBy", async (req, res) => {
+app.get("/carers/get-ratings-by", async (req, res) => {
   try {
     const { carername } = req.body;
     const result = await pool.query(
-      "SELECT rating FROM carers WHERE username = $1",
+      "SELECT rating FROM carers WHERE carer_name = $1",
       [carername]
     );
     res.json(result.rows[0]);
@@ -320,6 +309,71 @@ app.get("/carers/getReviewsBy", async (req, res) => {
   }
 })
 
+// create a pet
+app.post("/pets", async (req, res) => {
+  try {
+    const { pname, ownername, requirements, belongs } = req.body;
+    const newPet = await pool.query(
+      "INSERT INTO pets (pname, ownername, requirements, belongs) VALUES($1, $2, $3, $4) RETURNING *",
+      [pname, ownername, requirements, belongs]
+    );
+    res.json(newPet.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// get all pets
+app.get("/pets", async (req, res) => {
+  try {
+    const allPets = await pool.query("SELECT * FROM pets");
+    res.json(allPets.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// get a pet
+app.get("/pets/:pname", async (req, res) => {
+  try {
+    const { pname } = req.params;
+    const pet = await pool.query("SELECT * FROM pets WHERE pname = $1", [
+      pname
+    ]);
+    res.json(pet.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// update a pet
+app.put("/pets/:pname", async (req, res) => {
+  try {
+    const { pname, ownername, requirements, belongs } = req.params;
+    const updatePet = await pool.query(
+      "UPDATE pets SET ownername = $1, requirements = $2, belongs = $3 WHERE pname = $4",
+      [ownername, requirements, belongs, pname]
+    );
+    res.json("Pet was updated!");
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// delete a pet
+app.delete("/pets/:pname", async (req, res) => {
+  try {
+    const { pname } = req.params;
+    const deletePet = await pool.query("DELETE FROM pets WHERE pname = $1", [
+      pname
+    ]);
+    res.json("Pet was deleted!");
+  } catch (err) {
+    console.log(err.message);
+  }
+});
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });
+
