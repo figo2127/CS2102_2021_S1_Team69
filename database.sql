@@ -34,9 +34,12 @@ CREATE TABLE pets (
 );
 
 CREATE TABLE carers (
+	username VARCHAR(20) NOT NULL REFERENCES accounts(username),
+	category VARCHAR(20) NOT NULL REFERENCES categories(category_name),
 	number_pets INT,
-	rating DOUBLE(1, 2),
-	isFullTime BOOL
+	rating NUMERIC(3, 2),
+	isFullTime BOOL,
+	PRIMARY KEY(username)
 );
 
 CREATE TABLE availability (
@@ -63,7 +66,7 @@ CREATE TABLE bids(
   price NUMBER NOT NULL,
   is_sucessful INTEGER NULL,
   credit_card_num VARCHAR(16),
-  payment_date DATE NOT NULL,,∂
+  payment_date DATE NOT NULL,
   payment_mode VARCHAR(50) NOT NULL,
   delivery_method VARCHAR(50) NOT NULL,
   review_rating INTEGER NULL,

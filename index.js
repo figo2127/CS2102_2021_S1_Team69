@@ -277,6 +277,49 @@ app.delete("/creditcard/delete", async (req, res) => {
   }
 })
 
+// get list of carers
+app.get("/carers/getListOfCarer", async (req, res) => {
+  try {
+    const allCarers = await pool.query(
+      "SELECT * FROM carers"
+    );
+    res.json(allCarers.rows);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
+app.get("/carers/getCarerBy", async (req, res) => {
+  try {
+    const { rating, category } = req.body;
+    const result = await pool.query(
+      "SELECT * FROM carers WHERE rating = $1 AND category = $2",
+      [rating, category]
+    );
+    if (result.rows.length == 0) {
+      res.send("No such carer");
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+
+app.get("/carers/getReviewsBy", async (req, res) => {
+  try {
+    const { carername } = req.body;
+    const result = await pool.query(
+      "SELECT rating FROM carers WHERE username = $1",
+      [carername]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });
