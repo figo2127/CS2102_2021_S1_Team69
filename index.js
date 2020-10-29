@@ -280,7 +280,7 @@ app.get("/carers/get-list-of-carer", async (req, res) => {
 
 app.get("/carers/get-carer-by", async (req, res) => {
   try {
-    const { rating, category } = req.params;
+    const { rating, category } = req.body;
     const result = await pool.query(
       "SELECT * FROM carers WHERE rating = $1 AND category = $2",
       [rating, category]
@@ -296,9 +296,9 @@ app.get("/carers/get-carer-by", async (req, res) => {
 })
 
 //get all reviews for a carer sort by review_rating
-app.get("/reviews/:carername", async (req, res) => {
+app.get("/carers/get-ratings-by", async (req, res) => {
   try {
-    const { carername } = req.params;
+    const { carername } = req.body;
     const result = await pool.query(
       "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 ORDER BY review_rating DESC",
       [carername]
@@ -310,12 +310,12 @@ app.get("/reviews/:carername", async (req, res) => {
 })
 
 //get all reviews for a carer sorted by date
-app.get("/reviews/:carername", async (req, res) => {
+app.get("/reviews/carers/:carer_name", async (req, res) => {
   try {
-    const { carername } = req.params;
+    const { carer_name } = req.params;
     const result = await pool.query(
-      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 ORDER BY review_date DESC",
-      [carername]
+      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_rating IS NOT NULL ORDER BY review_date DESC",
+      [carer_name]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -407,14 +407,14 @@ app.get("/owners/spend/:month/:year", async (req, res) => {
 });
 
 //6. get all review given by a owner sort by date beining
-app.get("/reviews/:owner_name", async (req, res) => {
+app.get("/reviews/owners/:owner_name", async (req, res) => {
   try {
     const { owner_name } = req.params;
     const reviews = await pool.query(`
     SELECT review_rating, review_content, review_date 
     FROM bids WHERE owner_name = $1 
     AND review_rating IS NOT NULL
-    ORDER BY review_date DESC",`, [
+    ORDER BY review_date DESC`, [
         owner_name
     ]);
     res.json(reviews.rows);
@@ -422,8 +422,6 @@ app.get("/reviews/:owner_name", async (req, res) => {
     console.error(err.message);
   }
 });
-
-
 
 app.listen(5000, () => {
   console.log("server has started on port 5000");
