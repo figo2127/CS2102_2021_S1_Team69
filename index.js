@@ -320,6 +320,40 @@ app.get("/carers/getReviewsBy", async (req, res) => {
   }
 })
 
+
+/**
+ * check data correctness
+ */
+app.get("/carers/getpetday", async (req, res) => {
+  try {
+    var today = new Date();
+    var currentYear = today.getFullYear();
+    var currentMonth = today.getMonth();
+    // var startOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + "01";
+    // var endOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + ('0' + getDaysInMonth(currentMonth + 1, currentYear)).slice(-2);
+    var startOfMonthDate = new Date(currentYear, currentMonth, "01");
+    var startOfNextMonthDate = new Date(currentYear, currentMonth + 1, "01");
+    const {carername} = req.body;
+    const result = await pool.query(
+      "SELECT * FROM bids WHERE carer_name = $1 and EXTRACT(year from start_date) = $2 and EXTRACT(year from end_date) = $2, and (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)",
+      [carername, currentYear, currentMonth]
+    );
+    var sum = 0;
+    var tuples = res.rows[0]; //array of pairs of start date and end date
+    for (var i = 0; i < tuples.length; i++) {
+      var start = tuples[i][0]; // start date of a pair
+      var end = tuples[i][1]; // end date of a pair
+      var actualStart = max(startOfMonthDate, start);
+      var actualEnd = min(startOfNextMonthDate, end);
+      var days = actualEnd - actualStart;
+      sum += days;
+    }
+    res.send(sum);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });
