@@ -86,7 +86,7 @@ app.get("/accounts/login", async (req, res) => {
  * return combined json result from accounts table and owners table
  * Unchecked due to no owner table created yet
  */
-app.get("/owners/getOwnerInfo", async (req, res) => {
+app.get("/owners/:username", async (req, res) => {
   try {
     const { username } = req.body;
     const result = await pool.query(
@@ -108,7 +108,7 @@ app.get("/owners/getOwnerInfo", async (req, res) => {
 /**
  * Unchecked due to no owner table created yet
  */
-app.put("/owners/updateOwnerInfo", async (req, res) => {
+app.put("/owners/:username", async (req, res) => {
   try {
     const { username } = req.params;
     const { password, name, phone, area, address } = req.body;
@@ -206,7 +206,7 @@ app.delete("/categories/:category_name", async (req, res) => {
 });
 
 // create/add creditcard
-app.post("/creditcard/create", async (req, res) => {
+app.post("/creditcard", async (req, res) => {
   try {
     const { username, credit_card_num, expiry_date, cvv } = req.body;
     const result = await pool.query(
@@ -220,15 +220,12 @@ app.post("/creditcard/create", async (req, res) => {
 })
 
 // retrieve creditcard info
-app.post("/creditcard/read", async (req, res) => {
+app.get("/creditcard/:owner_name", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num
-    } = req.body;
+    const { owner_name } = req.params;
     const result = await pool.query(
-      "SELECT * FROM credit_card WHERE owner_username = $1 AND credit_card_num = $2;",
-      [username, credit_card_num]
+      "SELECT * FROM credit_card WHERE owner_username = $1;",
+      [owner_name]
     );
     res.json(result.rows);
   } catch (err) {
@@ -237,14 +234,9 @@ app.post("/creditcard/read", async (req, res) => {
 })
 
 // update creditcard info
-app.put("/creditcard/update", async (req, res) => {
+app.put("/creditcard/:credit_card_num", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num,
-      expiry_date,
-      cvv
-    } = req.body;
+    const { username, credit_card_num, expiry_date, cvv } = req.body;
     const result = await pool.query(
       "UPDATE credit_card SET expiry_date = $1, cvv = $2 WHERE owner_username = $3 AND credit_card_num = $4;",
       [expiry_date, cvv, username, credit_card_num]
@@ -258,10 +250,7 @@ app.put("/creditcard/update", async (req, res) => {
 // delete creditcard
 app.delete("/creditcard/delete", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num
-    } = req.body;
+    const { username, credit_card_num } = req.body;
     const result = await pool.query(
       "DELETE FROM credit_card WHERE owner_username = $1 AND credit_card_num = $2;",
       [username, credit_card_num]
@@ -273,7 +262,7 @@ app.delete("/creditcard/delete", async (req, res) => {
 })
 
 // get list of carers
-app.get("/carers/getListOfCarer", async (req, res) => {
+app.get("/carers/get-list-of-carer", async (req, res) => {
   try {
     const allCarers = await pool.query(
       "SELECT * FROM carers"
@@ -284,7 +273,7 @@ app.get("/carers/getListOfCarer", async (req, res) => {
   }
 })
 
-app.get("/carers/getCarerBy", async (req, res) => {
+app.get("/carers/get-carer-by", async (req, res) => {
   try {
     const { rating, category } = req.body;
     const result = await pool.query(
@@ -301,13 +290,27 @@ app.get("/carers/getCarerBy", async (req, res) => {
   }
 })
 
-
-app.get("/carers/getReviewsBy", async (req, res) => {
+//get all reviews for a carer sort by review_rating
+app.get("/carers/get-ratings-by", async (req, res) => {
   try {
     const { carername } = req.body;
     const result = await pool.query(
-      "SELECT rating FROM carers WHERE username = $1",
+      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 ORDER BY review_rating DESC",
       [carername]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+//get all reviews for a carer sorted by date
+app.get("/reviews/carers/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    const result = await pool.query(
+      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_rating IS NOT NULL ORDER BY review_date DESC",
+      [carer_name]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -379,6 +382,42 @@ app.delete("/pets/:pname", async (req, res) => {
   }
 });
 
+//3. rank owner money spend per month beining
+app.get("/owners/spend/:month/:year", async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    const owners = await pool.query(`
+      SELECT owner_name, SUM((end_date - start_date)*daily_price) AS money_spend
+      FROM bids WHERE is_sucessful = True 
+      AND EXTRACT(MONTH FROM bid_date) = $1
+      AND EXTRACT(YEAR FROM bid_date) = $2
+      GROUP BY owner_name
+      ORDER BY money_spend DESC`, [
+        month, year
+    ]);
+    res.json(owners.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+//6. get all review given by a owner sort by date beining
+app.get("/reviews/owners/:owner_name", async (req, res) => {
+  try {
+    const { owner_name } = req.params;
+    const reviews = await pool.query(`
+    SELECT review_rating, review_content, review_date 
+    FROM bids WHERE owner_name = $1 
+    AND review_rating IS NOT NULL
+    ORDER BY review_date DESC`, [
+        owner_name
+    ]);
+    res.json(reviews.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 // total number of pets taken care of in ($x) month (assuming month is an integer [1, 12])
 app.post("/num-pets", async (req, res) => {
   try {
@@ -440,3 +479,4 @@ app.post("/salary", async (req, res) => {
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });
+
