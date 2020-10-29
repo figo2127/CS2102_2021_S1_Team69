@@ -295,12 +295,26 @@ app.get("/carers/get-carer-by", async (req, res) => {
   }
 })
 
-
+//get all reviews for a carer sort by review_rating
 app.get("/carers/get-ratings-by", async (req, res) => {
   try {
     const { carername } = req.body;
     const result = await pool.query(
-      "SELECT rating FROM carers WHERE carer_name = $1",
+      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 ORDER BY review_rating DESC",
+      [carername]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+//get all reviews for a carer sorted by date
+app.get("/carers/get-reviews", async (req, res) => {
+  try {
+    const { carername } = req.body;
+    const result = await pool.query(
+      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 ORDER BY review_date DESC",
       [carername]
     );
     res.json(result.rows[0]);
