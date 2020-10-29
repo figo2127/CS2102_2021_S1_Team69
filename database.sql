@@ -65,39 +65,46 @@ CREATE TABLE takes_care (
 	PRIMARY KEY(carer_name, category_name)
 );
 
--- CREATE TABLE availability (
---  available_date timestamp(0) NOT NULL,
---  carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
---  PRIMARY KEY(available_date, carer_username)
---  -- ON DELETE CASCAdssasasa
--- );
+CREATE TABLE working_days (
+ working_date DATE NOT NULL,
+ carer_name VARCHAR(20) NOT NULL REFERENCES carers(carer_name) ON DELETE Cascade,
+ number_of_pets INT,
+ PRIMARY KEY(working_date, carer_name)
+);
+
+-- bids table
+CREATE TABLE bids(
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  carer_name VARCHAR(20) NOT NULL,
+  owner_name VARCHAR(20) NOT NULL,
+  pname VARCHAR(20) NOT NULL,
+  bid_date DATE NOT NULL,
+  price NUMERIC NOT NULL,
+  is_sucessful INTEGER NULL,
+  credit_card_num VARCHAR(16),
+  payment_date DATE NOT NULL,
+  payment_mode VARCHAR(50) NOT NULL,
+  delivery_method VARCHAR(50) NOT NULL,
+  review_rating INTEGER NULL,
+  review_content VARCHAR(500) NULL,
+  review_date DATE NOT NULL,
+  FOREIGN KEY (start_date, carer_name) REFERENCES working_days(working_date, carer_name ) ON DELETE Cascade,
+  FOREIGN KEY (end_date, carer_name) REFERENCES working_days(working_date, carer_name ) ON DELETE Cascade,
+  FOREIGN KEY (pname, owner_name) REFERENCES pets(pname, owner_name),
+  PRIMARY KEY(start_date, end_date, carer_name, owner_name, pname)
+);
+
+INSERT INTO bids VALUES (
+
+)
 
 -- CREATE TABLE availability_bid (
---  available_date timestamp(0) NOT NULL,
---  carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
---     owner_username VARCHAR(20) NOT NULL,
---     pname VARCHAR(20) NOT NULL,
---     FOREIGN KEY (owner_username, pname) REFERENCES pets(owner_userName, pname),
---  PRIMARY KEY(available_date, carer_username)
--- );
 
--- -- bids table
--- CREATE TABLE bids(
---   carer_username VARCHAR(20) NOT NULL REFERENCES carers(username),
---   owner_username VARCHAR(20) NOT NULL REFERENCES owners(owner_userName),
---   pname VARCHAR(20) NOT NULL,
---   bid_date DATE NOT NULL,
---   price NUMERIC NOT NULL,
---   is_sucessful INTEGER NULL,
---   credit_card_num VARCHAR(16),
---   payment_date DATE NOT NULL,
---   payment_mode VARCHAR(50) NOT NULL,
---   delivery_method VARCHAR(50) NOT NULL,
---   review_rating INTEGER NULL,
---   review_content VARCHAR(500) NULL,
---   review_date DATE NOT NULL,
---   PRIMARY KEY(carer_username, owner_username, pname),
---   FOREIGN KEY (owner_username, pname) REFERENCES pets(owner_userName, pname)
+--  owner_name VARCHAR(20) NOT NULL,
+--  pname VARCHAR(20) NOT NULL,
+--  FOREIGN KEY (owner_name, pname) REFERENCES pets(owner_name, pname),
+--  PRIMARY KEY(available_date, carer_name)
 -- );
 
 INSERT INTO accounts VALUES 
@@ -143,6 +150,20 @@ INSERT INTO credit_cards VALUES
 ('dearvae', '2453738493331112', 333, '2022-01-01'),
 ('gycc','4357876544441111', 444, '2023-01-04');
 
+INSERT INTO pets VALUES 
+('doggo', 'dearvae', 'go for a walk everyday', 'Dog'),
+('kitty', 'gycc', 'allergic to fish', 'Cat');
+
+INSERT INTO working_days VALUES
+('2020-10-04', 'zz', 0),
+('2020-10-05', 'zz', 0),
+('2020-10-06', 'zz', 0),
+('2020-10-07', 'zz', 0),
+('2020-10-08', 'zz', 0),
+('2020-10-09', 'zz', 0),
+('2020-10-10', 'zz', 0),
+('2020-10-04', 'gycc', 0),
+('2020-10-05','gycc', 0);
 
 -- api needed:
 -- account: (yichao)
@@ -201,11 +222,14 @@ INSERT INTO credit_cards VALUES
 -- (c) Their Pet information.
 -- (d) etc.
 
-1. filter carer by pet category
-2. sort carer by price 
-3. rank owner's money spend per month
-4. get all review for a carer sort by date
-5. get all review for a carer sort by star
-6. get all review given by a owner sort by date
-7. get number of petday for all carer in ($x) month 
-8. get number of petday by carer_name in ($x) month
+-- 1. filter carer by pet category jiaying
+-- 2. get list of carer, show their ($x) category price (sort)	jiaying
+-- 3. rank owner money spend per month beining
+-- 4. get all review for a carer sort by date			figo
+-- 5. get all review for a carer sort by review_rating	figo
+-- 6. get all review given by a owner sort by date beining
+-- 7. get number of petday for all carer in ($x) month yichao
+-- 8. get number of petday by carer_name in ($x) month yichao
+-- 9. total number of pets taken care of in ($x) month zhengzhi
+-- 10. get monthly salary by carer name for ($x) month zhengzhi
+research, securely call api with login account
