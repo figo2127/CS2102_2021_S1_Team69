@@ -1,21 +1,16 @@
 
 CREATE DATABASE petcaringdb;
 
-
-
-DROP TABLE IF EXISTS bids;
-DROP TABLE IF EXISTS takes_care;
-DROP TABLE IF EXISTS carers;
-DROP TABLE IF EXISTS credit_cards;
-DROP TABLE IF EXISTS owners;
-DROP TABLE IF EXISTS accounts;
-DROP TABLE IF EXISTS admins;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS working_days;
-DROP TABLE IF EXISTS pets;
-
-
-
+DROP TABLE IF EXISTS bids CASCADE;
+DROP TABLE IF EXISTS takes_care CASCADE;
+DROP TABLE IF EXISTS carers CASCADE;
+DROP TABLE IF EXISTS credit_cards CASCADE;
+DROP TABLE IF EXISTS owners CASCADE;
+DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS admins CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS working_days CASCADE;
+DROP TABLE IF EXISTS pets CASCADE;
 
 CREATE TABLE accounts(
  username VARCHAR(20) NOT NULL,
@@ -68,6 +63,7 @@ CREATE TABLE carers(
 CREATE TABLE takes_care (
 	carer_name VARCHAR(20) NOT NULL REFERENCES carers(carer_name),
 	category_name VARCHAR(20) NOT NULL REFERENCES categories(category_name),
+	computed_price NUMERIC(5,2) NOT NULL,
 	PRIMARY KEY(carer_name, category_name)
 );
 
@@ -196,7 +192,6 @@ INSERT INTO bids VALUES
 -- 14.getCarerBy username(rating, category) (Figo)
 -- getReviews by carername
 
-
 -- Admin:
 -- 15,16,17,18.CRUD category (Beining)
 
@@ -210,14 +205,15 @@ INSERT INTO bids VALUES
 -- full-time Care Taker.
 -- (e) etc.
 
+authorization when using api (figo beining)
 -- Bids:
--- createBids
--- getBids
--- getlist of sucess Bids by ownername (for onwer see past order)
--- getlist of sucess Bids by carername (for carer see past order)
-
--- addReviewForBids
-
+createBids figo
+getBids figo
+update Bid by (primary key) (can only update the review info) jiaying
+getlist of sucess Bids by ownername (for onwer see past order) beining
+getlist of sucess Bids by carername (for carer see past order) beining
+write a trigger for takes_care when new review rating inserted. zhengzhi
+write a trigger to update working_days of carer after a bid is mark as successful. (yichao)
 
 -- 2. Support data access for the different users (e.g., Pet Owner can view reviews of Care Taker,
 -- their own past orders, etc.; Care Taker can see their review, their past jobs, their salary, etc.).
