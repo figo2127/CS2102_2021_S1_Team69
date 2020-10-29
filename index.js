@@ -310,9 +310,9 @@ app.get("/carers/get-ratings-by", async (req, res) => {
 })
 
 //get all reviews for a carer sorted by date
-app.get("/carers/get-reviews", async (req, res) => {
+app.get("/reviews/:carername", async (req, res) => {
   try {
-    const { carername } = req.body;
+    const { carername } = req.params;
     const result = await pool.query(
       "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 ORDER BY review_date DESC",
       [carername]
@@ -386,6 +386,44 @@ app.delete("/pets/:pname", async (req, res) => {
     console.log(err.message);
   }
 });
+
+//3. rank owner money spend per month beining
+app.get("/owners/spend/:month/:year", async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    const owners = await pool.query(`
+      SELECT owner_name, SUM((end_date - start_date)*daily_price) AS money_spend
+      FROM bids WHERE is_sucessful = True 
+      AND EXTRACT(MONTH FROM bid_date) = $1
+      AND EXTRACT(YEAR FROM bid_date) = $2
+      GROUP BY owner_name
+      ORDER BY money_spend DESC`, [
+        month, year
+    ]);
+    res.json(owners.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+//6. get all review given by a owner sort by date beining
+app.get("/reviews/:owner_name", async (req, res) => {
+  try {
+    const { owner_name } = req.params;
+    const reviews = await pool.query(`
+    SELECT review_rating, review_content, review_date 
+    FROM bids WHERE owner_name = $1 
+    AND review_rating IS NOT NULL
+    ORDER BY review_date DESC",`, [
+        owner_name
+    ]);
+    res.json(reviews.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+
 
 app.listen(5000, () => {
   console.log("server has started on port 5000");
