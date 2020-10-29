@@ -280,7 +280,7 @@ app.get("/carers/get-list-of-carer", async (req, res) => {
 
 app.get("/carers/get-carer-by", async (req, res) => {
   try {
-    const { rating, category } = req.body;
+    const { rating, category } = req.params;
     const result = await pool.query(
       "SELECT * FROM carers WHERE rating = $1 AND category = $2",
       [rating, category]
@@ -296,9 +296,9 @@ app.get("/carers/get-carer-by", async (req, res) => {
 })
 
 //get all reviews for a carer sort by review_rating
-app.get("/carers/get-ratings-by", async (req, res) => {
+app.get("/reviews/:carername", async (req, res) => {
   try {
-    const { carername } = req.body;
+    const { carername } = req.params;
     const result = await pool.query(
       "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 ORDER BY review_rating DESC",
       [carername]
@@ -310,9 +310,9 @@ app.get("/carers/get-ratings-by", async (req, res) => {
 })
 
 //get all reviews for a carer sorted by date
-app.get("/carers/get-reviews", async (req, res) => {
+app.get("/reviews/:carername", async (req, res) => {
   try {
-    const { carername } = req.body;
+    const { carername } = req.params;
     const result = await pool.query(
       "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 ORDER BY review_date DESC",
       [carername]
