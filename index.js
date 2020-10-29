@@ -1,10 +1,10 @@
 const express = require("express");
 const app = express();
-// const cors = require("cors");
+const cors = require("cors");
 const pool = require("./db");
 
 //middleware
-// app.use(cors());
+app.use(cors());
 app.use(express.json()); //req.body
 
 //ROUTES//
@@ -208,12 +208,7 @@ app.delete("/categories/:category_name", async (req, res) => {
 // create/add creditcard
 app.post("/creditcard/create", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num,
-      expiry_date,
-      cvv
-    } = req.body;
+    const { username, credit_card_num, expiry_date, cvv } = req.body;
     const result = await pool.query(
       "INSERT INTO credit_card (owner_username, credit_card_num, expiry_date, cvv) VALUES($1, $2, $3, $4);",
       [username, credit_card_num, expiry_date, cvv]
@@ -317,6 +312,128 @@ app.get("/carers/getReviewsBy", async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err.message);
+  }
+})
+
+// create a pet
+app.post("/pets", async (req, res) => {
+  try {
+    const { pname, ownername, requirements, belongs } = req.body;
+    const newPet = await pool.query(
+      "INSERT INTO pets (pname, ownername, requirements, belongs) VALUES($1, $2, $3, $4) RETURNING *",
+      [pname, ownername, requirements, belongs]
+    );
+    res.json(newPet.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// get all pets
+app.get("/pets", async (req, res) => {
+  try {
+    const allPets = await pool.query("SELECT * FROM pets");
+    res.json(allPets.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// get a pet
+app.get("/pets/:pname", async (req, res) => {
+  try {
+    const { pname } = req.params;
+    const pet = await pool.query("SELECT * FROM pets WHERE pname = $1", [
+      pname
+    ]);
+    res.json(pet.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// update a pet
+app.put("/pets/:pname", async (req, res) => {
+  try {
+    const { pname, ownername, requirements, belongs } = req.params;
+    const updatePet = await pool.query(
+      "UPDATE pets SET ownername = $1, requirements = $2, belongs = $3 WHERE pname = $4",
+      [ownername, requirements, belongs, pname]
+    );
+    res.json("Pet was updated!");
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+// delete a pet
+app.delete("/pets/:pname", async (req, res) => {
+  try {
+    const { pname } = req.params;
+    const deletePet = await pool.query("DELETE FROM pets WHERE pname = $1", [
+      pname
+    ]);
+    res.json("Pet was deleted!");
+  } catch (err) {
+    console.log(err.message);
+  }
+});
+
+// total number of pets taken care of in ($x) month (assuming month is an integer [1, 12])
+app.post("/num-pets", async (req, res) => {
+  try {
+    const { month, carer_name } = req.body;
+    const getNumPets = await pool.query(
+      "SELECT COUNT(*) FROM bids WHERE EXTRACT(MONTH FROM start_date) = $1 AND carer_name = $2;",
+      [month, carer_name]
+    );
+    res.json(getNumPets.rows[0]);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
+// get monthly salary by carer name for ($x) month (assuming month is an integer [1, 12])
+app.post("/salary", async (req, res) => {
+  try {
+    const { year, month, carer_name, is_fulltime } = req.body;
+    const start_of_month = `${year}-${month}-01`
+    let base_pay = 0.0
+    let portion = 0.75;
+    let offset = 0;
+    if (is_fulltime) {
+      base_pay = 3000.0
+      portion = 0.80;
+      offset = 60;
+    }
+    let query =
+      `SELECT (SUM (b.daily_price) OVER ()) * $1 + $2 AS salary\n` +
+      `FROM (\n` +
+      `  (\n` +
+      `    SELECT generate_series(\n` +
+      `      $3,\n` +
+      `      (DATE($3) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,\n` +
+      `      '1 day'::interval\n` +
+      `    )::date AS day\n` +
+      `  )\n` +
+      `) days_in_month\n` +
+      `CROSS JOIN bids b\n` +
+      `WHERE\n` +
+      `  b.start_date <= day AND b.end_date >= day AND\n` +
+      `  b.carer_name = $4\n` +
+      `ORDER BY\n` +
+      `  day ASC,\n` +
+      `  daily_price ASC\n` +
+      `OFFSET $5;`;
+    const getSalary = await pool.query(query, [portion, base_pay, start_of_month, carer_name, offset]);
+    console.log(getSalary.rows)
+    if (getSalary.rows[0]) {
+      res.json(getSalary.rows[0]);
+    } else {
+      res.json({ salary: "3000.00" });
+    }
+  } catch (err) {
+    console.log(err.message);
   }
 })
 
