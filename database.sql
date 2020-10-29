@@ -95,9 +95,9 @@ CREATE TABLE bids(
   PRIMARY KEY(start_date, end_date, carer_name, owner_name, pname)
 );
 
-INSERT INTO bids VALUES (
+-- INSERT INTO bids VALUES (
 
-)
+-- )
 
 -- CREATE TABLE availability_bid (
 
@@ -223,7 +223,20 @@ INSERT INTO working_days VALUES
 -- (d) etc.
 
 -- 1. filter carer by pet category jiaying
+SELECT carer_name
+FROM takes_care
+WHERE category_name = 'Dog';
+
 -- 2. get list of carer, show their ($x) category price (sort)	jiaying
+SELECT carers.username, categories.base_price,
+CASE WHEN categories.base_price > 4 THEN categories.base_price * 1.2
+	 WHEN categories.base_price > 3 THEN categories.base_price * 1.1
+	 ELSE categories.base_price
+	 END AS price
+FROM carers, categories
+WHERE carers.category = categories.category_name
+ORDER BY categories.base_price;
+
 -- 3. rank owner money spend per month beining
 -- 4. get all review for a carer sort by date			figo
 -- 5. get all review for a carer sort by review_rating	figo
