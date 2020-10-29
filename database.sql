@@ -3,12 +3,15 @@ CREATE DATABASE petcaringdb;
 
 DROP TABLE IF EXISTS carers;
 DROP TABLE IF EXISTS owners;
-DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS bids;
+DROP TABLE IF EXISTS working_days;
 DROP TABLE IF EXISTS pets;
 DROP TABLE IF EXISTS credit_cards;
 DROP TABLE IF EXISTS takes_care;
+
 
 CREATE TABLE accounts(
  username VARCHAR(20) NOT NULL,
@@ -53,9 +56,8 @@ CREATE TABLE credit_cards(
 
 CREATE TABLE carers(
  carer_name VARCHAR(20) NOT NULL REFERENCES accounts(username),
- number_pets INT,
  rating NUMERIC(3, 2),
- isFullTime BOOL,
+ isFullTime BOOL NOT NULL,
  PRIMARY KEY(carer_name)
 );
 
@@ -80,24 +82,20 @@ CREATE TABLE bids(
   owner_name VARCHAR(20) NOT NULL,
   pname VARCHAR(20) NOT NULL,
   bid_date DATE NOT NULL,
-  price NUMERIC NOT NULL,
-  is_sucessful INTEGER NULL,
+  daily_price NUMERIC NOT NULL,
+  is_sucessful BOOL NULL,
   credit_card_num VARCHAR(16),
   payment_date DATE NOT NULL,
   payment_mode VARCHAR(50) NOT NULL,
   delivery_method VARCHAR(50) NOT NULL,
   review_rating INTEGER NULL,
   review_content VARCHAR(500) NULL,
-  review_date DATE NOT NULL,
+  review_date DATE NULL,
   FOREIGN KEY (start_date, carer_name) REFERENCES working_days(working_date, carer_name ) ON DELETE Cascade,
   FOREIGN KEY (end_date, carer_name) REFERENCES working_days(working_date, carer_name ) ON DELETE Cascade,
   FOREIGN KEY (pname, owner_name) REFERENCES pets(pname, owner_name),
   PRIMARY KEY(start_date, end_date, carer_name, owner_name, pname)
 );
-
-INSERT INTO bids VALUES (
-
-)
 
 -- CREATE TABLE availability_bid (
 
@@ -121,11 +119,12 @@ INSERT INTO admins VALUES
 
 INSERT INTO owners VALUES
 ('dearvae'),
-('gycc');
+('gycc'),
+('jy');
 
 INSERT INTO carers VALUES
-('zz'),
-('gycc');
+('zz', null, 'true'),
+('gycc', null, 'true');
 
 INSERT INTO categories VALUES
 ('Bird', 40.00),
@@ -152,7 +151,9 @@ INSERT INTO credit_cards VALUES
 
 INSERT INTO pets VALUES 
 ('doggo', 'dearvae', 'go for a walk everyday', 'Dog'),
-('kitty', 'gycc', 'allergic to fish', 'Cat');
+('manman', 'dearvae', 'feed twice a day', 'Cat'),
+('kitty', 'gycc', 'allergic to fish', 'Cat'),
+('meow', 'jy', 'NA', 'Cat');
 
 INSERT INTO working_days VALUES
 ('2020-10-04', 'zz', 0),
@@ -164,6 +165,14 @@ INSERT INTO working_days VALUES
 ('2020-10-10', 'zz', 0),
 ('2020-10-04', 'gycc', 0),
 ('2020-10-05','gycc', 0);
+
+
+INSERT INTO bids VALUES 
+('2020-10-04', '2020-10-08', 'zz', 'dearvae', 'doggo', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', null, null, null),
+('2020-10-04', '2020-10-08', 'zz', 'dearvae', 'manman', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', null, null, null),
+('2020-10-04', '2020-10-05', 'gycc', 'jy', 'meow', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', null, null, null),
+('2020-10-04', '2020-10-05', 'zz', 'gycc', 'kitty', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', null, null, null);
+
 
 -- api needed:
 -- account: (yichao)
