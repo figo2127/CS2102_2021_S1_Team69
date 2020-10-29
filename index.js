@@ -296,7 +296,7 @@ app.get("/carers/get-carer-by", async (req, res) => {
 })
 
 //get all reviews for a carer sort by review_rating
-app.get("/carers/get-ratings-by", async (req, res) => {
+app.get("/carers/:carername", async (req, res) => {
   try {
     const { carername } = req.body;
     const result = await pool.query(
