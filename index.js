@@ -208,12 +208,7 @@ app.delete("/categories/:category_name", async (req, res) => {
 // create/add creditcard
 app.post("/creditcard", async (req, res) => {
   try {
-    const {
-      username,
-      credit_card_num,
-      expiry_date,
-      cvv
-    } = req.body;
+    const { username, credit_card_num, expiry_date, cvv } = req.body;
     const result = await pool.query(
       "INSERT INTO credit_card (owner_username, credit_card_num, expiry_date, cvv) VALUES($1, $2, $3, $4);",
       [username, credit_card_num, expiry_date, cvv]
