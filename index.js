@@ -368,7 +368,7 @@ app.put("/pets/:pname", async (req, res) => {
       "UPDATE pets SET ownername = $1, requirements = $2, belongs = $3 WHERE pname = $4",
       [ownername, requirements, belongs, pname]
     );
-    res.json("Pet was updated!");
+    res.send("Pet was updated!");
   } catch (err) {
     console.error(err.message);
   }
@@ -381,7 +381,7 @@ app.delete("/pets/:pname", async (req, res) => {
     const deletePet = await pool.query("DELETE FROM pets WHERE pname = $1", [
       pname
     ]);
-    res.json("Pet was deleted!");
+    res.send("Pet was deleted!");
   } catch (err) {
     console.log(err.message);
   }
