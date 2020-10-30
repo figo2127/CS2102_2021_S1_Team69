@@ -77,6 +77,163 @@ app.get("/accounts/login", async (req, res) => {
   }
 })
 
+/**
+ * input format
+ * {
+ *  "carer_name" : "zz"
+ * }
+ * output a single integer
+ * get the number of pet days of a carer in current month
+ * checked correct
+ */
+app.get("/carers/getpetdayofcurrentmonth", async (req, res) => {
+  try {
+    var today = new Date();
+    var currentYear = today.getFullYear();
+    var currentMonth = today.getMonth() + 1;
+    // var startOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + "01";
+    // var endOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + ('0' + getDaysInMonth(currentMonth + 1, currentYear)).slice(-2);
+    var startOfMonthDate = new Date(currentYear, currentMonth - 1, "01");
+    var startOfNextMonthDate = new Date(currentYear, currentMonth, "01");
+    const {carer_name} = req.body;
+    const result = await pool.query(`
+      SELECT * FROM bids 
+      WHERE carer_name = $1
+      AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
+      AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
+      [carer_name, currentYear, currentMonth]
+    );
+    var sum = 0;
+    var tuples = result.rows; //array of pairs of start date and end date
+    // var rows = JSON.parse(result.rows);
+    // res.json(tuples);
+    for (var i = 0; i < tuples.length; i++) {
+      // var row = rows[i];
+      // var rowObj = JSON.parse(row);
+      var rowObj = tuples[i];
+      var start = rowObj.start_date;//start date of a data
+      var end = rowObj.end_date;//end date of a data
+      // var start_date = new Date(start.substring(0, 4), start.substring(5, 7), start.substring(8, 10));
+      // var end_date = new Date(end.substring(0, 4), end.substring(5, 7), end.substring(8, 10));
+      // var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      // var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      // console.log(actualStart + " : " + actualEnd);
+      var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
+      sum += days;
+    }
+    res.send("" + sum);
+  } catch (err) {
+    console.log("Error in getting carer's petday of current month");
+    console.error(err);
+  }
+})
+
+/**
+ * input of format
+ * {
+ *  "particularYear" : "2020",
+ *  "particularMonth": "10",
+ *  "carer_name"     : "zz"
+ * }
+ * output a single integer
+ * get the number of pet days of a carer in a particular month
+ * checked correct
+ */
+app.get("/carers/getpetdayofparticularmonth", async (req, res) => {
+  try {
+    // var today = new Date();
+    var {particularYear, particularMonth, carer_name} = req.body;
+    // var startOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + "01";
+    // var endOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + ('0' + getDaysInMonth(currentMonth + 1, currentYear)).slice(-2);
+    var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
+    var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
+    const result = await pool.query(`
+      SELECT * FROM bids 
+      WHERE carer_name = $1
+      AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
+      AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
+      [carer_name, particularYear, particularMonth]
+    );
+    var sum = 0;
+    var tuples = result.rows; //array of pairs of start date and end date
+    // var rows = JSON.parse(result.rows);
+    // res.json(tuples);
+    for (var i = 0; i < tuples.length; i++) {
+      // var row = rows[i];
+      // var rowObj = JSON.parse(row);
+      var rowObj = tuples[i];
+      var start = rowObj.start_date;//start date of a data
+      var end = rowObj.end_date;//end date of a data
+      // var start_date = new Date(start.substring(0, 4), start.substring(5, 7), start.substring(8, 10));
+      // var end_date = new Date(end.substring(0, 4), end.substring(5, 7), end.substring(8, 10));
+      // var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      // var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      // console.log(actualStart + " : " + actualEnd);
+      var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
+      sum += days;
+    }
+    res.send("" + sum);
+  } catch (err) {
+    console.log("Error in getting carer's petday of particular month");
+    console.error(err);
+  }
+})
+
+/**
+ * input of format
+ * {
+ *  "particularYear" : "2020",
+ *  "particularMonth": "10",
+ * }
+ * output a single integer
+ * get the number of pet days of a carer in a particular month
+ * checked correct
+ */
+app.get("/summary/gettotalpetdayofparticularmonth", async (req, res) => {
+  try {
+    // var today = new Date();
+    var {particularYear, particularMonth} = req.body;
+    // var startOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + "01";
+    // var endOfMonth = currentYear + "-" + ('0' + (currentMonth + 1)).slice(-2) + "-" + ('0' + getDaysInMonth(currentMonth + 1, currentYear)).slice(-2);
+    var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
+    var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
+    const result = await pool.query(`
+      SELECT * FROM bids
+      where (EXTRACT(year from start_date) = $1 OR EXTRACT(year from end_date) = $1) 
+      AND (EXTRACT(month from start_date) = $2 OR EXTRACT(month from end_date) = $2)`,
+      [particularYear, particularMonth]
+    );
+    var sum = 0;
+    var tuples = result.rows; //array of pairs of start date and end date
+    // var rows = JSON.parse(result.rows);
+    // res.json(tuples);
+    for (var i = 0; i < tuples.length; i++) {
+      // var row = rows[i];
+      // var rowObj = JSON.parse(row);
+      var rowObj = tuples[i];
+      var start = rowObj.start_date;//start date of a data
+      var end = rowObj.end_date;//end date of a data
+      // var start_date = new Date(start.substring(0, 4), start.substring(5, 7), start.substring(8, 10));
+      // var end_date = new Date(end.substring(0, 4), end.substring(5, 7), end.substring(8, 10));
+      // var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      // var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      // console.log(actualStart + " : " + actualEnd);
+      var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
+      sum += days;
+    }
+    res.send("" + sum);
+  } catch (err) {
+    console.log("Error in getting total petday of particular month");
+    console.error(err);
+  }
+})
+
 //getOwnerInfo
 /**
  * need request body in format
@@ -208,7 +365,12 @@ app.delete("/categories/:category_name", async (req, res) => {
 // create/add creditcard
 app.post("/creditcard", async (req, res) => {
   try {
-    const { username, credit_card_num, expiry_date, cvv } = req.body;
+    const {
+      username,
+      credit_card_num,
+      expiry_date,
+      cvv
+    } = req.body;
     const result = await pool.query(
       "INSERT INTO credit_card (owner_username, credit_card_num, expiry_date, cvv) VALUES($1, $2, $3, $4);",
       [username, credit_card_num, expiry_date, cvv]
@@ -363,7 +525,7 @@ app.put("/pets/:pname", async (req, res) => {
       "UPDATE pets SET ownername = $1, requirements = $2, belongs = $3 WHERE pname = $4",
       [ownername, requirements, belongs, pname]
     );
-    res.send("Pet was updated!");
+    res.json("Pet was updated!");
   } catch (err) {
     console.error(err.message);
   }
@@ -376,7 +538,7 @@ app.delete("/pets/:pname", async (req, res) => {
     const deletePet = await pool.query("DELETE FROM pets WHERE pname = $1", [
       pname
     ]);
-    res.send("Pet was deleted!");
+    res.json("Pet was deleted!");
   } catch (err) {
     console.log(err.message);
   }
@@ -418,62 +580,6 @@ app.get("/reviews/owners/:owner_name", async (req, res) => {
   }
 });
 
-// 9. total number of pets taken care of in ($x) month (assuming month is an integer [1, 12])
-app.post("/num-pets", async (req, res) => {
-  try {
-    const { month, carer_name } = req.body;
-    const getNumPets = await pool.query(
-      "SELECT COUNT(*) FROM bids WHERE EXTRACT(MONTH FROM start_date) = $1 AND carer_name = $2;",
-      [month, carer_name]
-    );
-    res.json(getNumPets.rows[0]);
-  } catch (err) {
-    console.log(err.message);
-  }
-})
-
-// 10. get monthly salary by carer name for ($x) month (assuming month is an integer [1, 12])
-app.post("/salary", async (req, res) => {
-  try {
-    const { year, month, carer_name, is_fulltime } = req.body;
-    const start_of_month = `${year}-${month}-01`
-    let base_pay = 0.0
-    let portion = 0.75;
-    let offset = 0;
-    if (is_fulltime) {
-      base_pay = 3000.0
-      portion = 0.80;
-      offset = 60;
-    }
-    let query =
-      `SELECT (SUM (b.daily_price) OVER ()) * $1 + $2 AS salary
-      FROM (
-          SELECT generate_series(
-            $3,
-            (DATE($3) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,
-            '1 day'::interval
-          )::date AS day
-      ) days_in_month
-      CROSS JOIN bids b
-      WHERE
-        b.start_date <= day AND b.end_date >= day AND
-        b.carer_name = $4
-      ORDER BY
-        day ASC,
-        daily_price ASC
-      OFFSET $5;`;
-    const getSalary = await pool.query(query, [portion, base_pay, start_of_month, carer_name, offset]);
-    if (getSalary.rows[0]) {
-      res.json(getSalary.rows[0]);
-    } else {
-      res.json({ salary: "3000.00" });
-    }
-  } catch (err) {
-    console.log(err.message);
-  }
-})
-
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });
-
