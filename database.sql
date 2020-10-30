@@ -87,7 +87,7 @@ CREATE TABLE bids(
   pname VARCHAR(20) NOT NULL,
   bid_date DATE NOT NULL,
   daily_price NUMERIC NOT NULL,
-  is_sucessful BOOL NULL,
+  is_successful BOOL NULL,
   credit_card_num VARCHAR(16),
   payment_date DATE NOT NULL,
   payment_mode VARCHAR(50) NOT NULL,
@@ -270,3 +270,33 @@ SELECT review_rating, review_content, review_date
 -- 9. total number of pets taken care of in ($x) month zhengzhi
 -- 10. get monthly salary by carer name for ($x) month zhengzhi
 research, securely call api with login account
+
+
+-- CREATE TABLE working_days (
+--  working_date DATE NOT NULL,
+--  carer_name VARCHAR(20) NOT NULL REFERENCES carers(carer_name) ON DELETE Cascade,
+--  number_of_pets INT,
+--  PRIMARY KEY(working_date, carer_name)
+-- );
+
+-- Trigger bid_turns_success will call function increment_working_day_pet.
+-- This is one off
+-- Any update on is_successful column of bids table will cause the trigger (including setting is_successful from true to false and vice versa)
+-- so needs to modify further if we want to allow rollback of a successful bid
+CREATE OR REPLACE FUNCTION increment_working_day_pet()
+RETURNS TRIGGER AS 
+$$
+BEGIN
+UPDATE working_days
+SET number_of_pets = number_of_pets + 1
+WHERE carer_name = NEW.carer_name
+AND working_date >= NEW.start_date
+AND working_date <= NEW.end_date;
+RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER bid_turns_success
+AFTER UPDATE OF is_successful ON bids
+FOR EACH ROW EXECUTE PROCEDURE increment_working_day_pet();
