@@ -259,7 +259,15 @@ SELECT owner_name, SUM((end_date - start_date)*daily_price) AS money_spend
       GROUP BY owner_name
       ORDER BY money_spend DESC;
 -- 4. get all review for a carer sort by date			figo
+SELECT review_date, review_content, review_rating
+FROM bids
+WHERE carer_name = 'homie' AND review_date NOT NULL
+ORDER BY review_date DESC
 -- 5. get all review for a carer sort by review_rating	figo
+SELECT review_date, review_content, review_rating
+FROM bids
+WHERE carer_name = 'homie' AND review_rating NOT NULL
+ORDER BY review_rating DESC
 -- 6. get all review given by a owner sort by date beining
 SELECT review_rating, review_content, review_date 
     FROM bids WHERE owner_name = 'dearvae' 

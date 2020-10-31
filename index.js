@@ -420,12 +420,12 @@ app.get("/carers/get-carer-by", async (req, res) => {
 })
 
 //get all reviews for a carer sort by review_rating
-app.get("/carers/:carername", async (req, res) => {
+app.get("/carers/reviews-by-rating/:carer_name", async (req, res) => {
   try {
-    const { carername } = req.body;
+    const { carer_name } = req.body;
     const result = await pool.query(
-      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 ORDER BY review_rating DESC",
-      [carername]
+      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 AND review_rating NOT NULL ORDER BY review_rating DESC",
+      [carer_name]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -434,11 +434,39 @@ app.get("/carers/:carername", async (req, res) => {
 })
 
 //get all reviews for a carer sorted by date
-app.get("/reviews/carers/:carer_name", async (req, res) => {
+app.get("/carers/reviews-by-date/:carer_name", async (req, res) => {
   try {
     const { carer_name } = req.params;
     const result = await pool.query(
-      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_rating IS NOT NULL ORDER BY review_date DESC",
+      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_date NOT NULL ORDER BY review_date DESC",
+      [carer_name]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+//create a bid
+app.post("/bids", async(req, res) => {
+  try {
+    const{ carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date } = req.body;
+    const newPet = await pool.query(
+      "INSERT INTO bids (carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date, is_successful, review_date, review_content, review_rating) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL, NULL, NULL, NULL) RETURNING *",
+      [carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date]
+    );
+    res.json(newPet.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+//get bids
+app.get("/bids/carers/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    const result = await pool.query(
+      "SELECT carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date, is_successful, review_date, review_content, review_rating FROM bids WHERE carer_name = $1 ORDER BY bid_date DESC",
       [carer_name]
     );
     res.json(result.rows[0]);
