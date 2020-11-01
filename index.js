@@ -68,12 +68,136 @@ app.get("/accounts/login", async (req, res) => {
     );
     if (result.rows.length == 0) {
       res.send("Incorrect username or password");
-      // res.json({content: "Incorrect username or password"})
     } else {
       res.json(result.rows[0]);
     }
   } catch (err) {
     console.error(err.message);
+  }
+})
+
+/**
+ * input format
+ * {
+ *  "carer_name" : "zz"
+ * }
+ * output a single integer
+ * get the number of pet days of a carer in current month
+ * checked correct
+ */
+app.get("/carers/getpetdayofcurrentmonth", async (req, res) => {
+  try {
+    var today = new Date();
+    var currentYear = today.getFullYear();
+    var currentMonth = today.getMonth() + 1;
+    var startOfMonthDate = new Date(currentYear, currentMonth - 1, "01");
+    var startOfNextMonthDate = new Date(currentYear, currentMonth, "01");
+    const {carer_name} = req.body;
+    const result = await pool.query(`
+      SELECT * FROM bids 
+      WHERE carer_name = $1
+      AND is_successful = TRUE
+      AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
+      AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
+      [carer_name, currentYear, currentMonth]
+    );
+    var sum = 0;
+    var tuples = result.rows;
+    for (var i = 0; i < tuples.length; i++) {
+      var rowObj = tuples[i];
+      var start = rowObj.start_date;
+      var end = rowObj.end_date;
+      var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
+      sum += days;
+    }
+    res.send("" + sum);
+  } catch (err) {
+    console.log("Error in getting carer's petday of current month");
+    console.error(err);
+  }
+})
+
+/**
+ * input of format
+ * {
+ *  "particularYear" : "2020",
+ *  "particularMonth": "10",
+ *  "carer_name"     : "zz"
+ * }
+ * output a single integer
+ * get the number of pet days of a carer in a particular month
+ * checked correct
+ */
+app.get("/carers/getpetdayofparticularmonth", async (req, res) => {
+  try {
+    var {particularYear, particularMonth, carer_name} = req.body;
+    var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
+    var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
+    const result = await pool.query(`
+      SELECT * FROM bids 
+      WHERE carer_name = $1
+      AND is_successful = TRUE
+      AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
+      AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
+      [carer_name, particularYear, particularMonth]
+    );
+    var sum = 0;
+    var tuples = result.rows;
+    for (var i = 0; i < tuples.length; i++) {
+      var rowObj = tuples[i];
+      var start = rowObj.start_date;
+      var end = rowObj.end_date;
+      var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
+      sum += days;
+    }
+    res.send("" + sum);
+  } catch (err) {
+    console.log("Error in getting carer's petday of particular month");
+    console.error(err);
+  }
+})
+
+/**
+ * input of format
+ * {
+ *  "particularYear" : "2020",
+ *  "particularMonth": "10",
+ * }
+ * output a single integer
+ * get the number of pet days of a carer in a particular month
+ * checked correct
+ */
+app.get("/summary/gettotalpetdayofparticularmonth", async (req, res) => {
+  try {
+    var {particularYear, particularMonth} = req.body;
+    var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
+    var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
+    const result = await pool.query(`
+      SELECT * FROM bids
+      where is_successful = TRUE
+      AND (EXTRACT(year from start_date) = $1 OR EXTRACT(year from end_date) = $1) 
+      AND (EXTRACT(month from start_date) = $2 OR EXTRACT(month from end_date) = $2)`,
+      [particularYear, particularMonth]
+    );
+    var sum = 0;
+    var tuples = result.rows;
+    for (var i = 0; i < tuples.length; i++) {
+      var rowObj = tuples[i];
+      var start = rowObj.start_date;
+      var end = rowObj.end_date;
+      var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
+      var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
+      var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
+      sum += days;
+    }
+    res.send("" + sum);
+  } catch (err) {
+    console.log("Error in getting total petday of particular month");
+    console.error(err);
   }
 })
 
@@ -296,12 +420,12 @@ app.get("/carers/get-carer-by", async (req, res) => {
 })
 
 //get all reviews for a carer sort by review_rating
-app.get("/carers/get-ratings-by", async (req, res) => {
+app.get("/carers/reviews-by-rating/:carer_name", async (req, res) => {
   try {
-    const { carername } = req.body;
+    const { carer_name } = req.body;
     const result = await pool.query(
-      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 ORDER BY review_rating DESC",
-      [carername]
+      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 AND review_rating NOT NULL ORDER BY review_rating DESC",
+      [carer_name]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -310,11 +434,39 @@ app.get("/carers/get-ratings-by", async (req, res) => {
 })
 
 //get all reviews for a carer sorted by date
-app.get("/reviews/carers/:carer_name", async (req, res) => {
+app.get("/carers/reviews-by-date/:carer_name", async (req, res) => {
   try {
     const { carer_name } = req.params;
     const result = await pool.query(
-      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_rating IS NOT NULL ORDER BY review_date DESC",
+      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_date NOT NULL ORDER BY review_date DESC",
+      [carer_name]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+//create a bid
+app.post("/bids", async(req, res) => {
+  try {
+    const{ carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date } = req.body;
+    const newPet = await pool.query(
+      "INSERT INTO bids (carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date, is_successful, review_date, review_content, review_rating) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL, NULL, NULL, NULL) RETURNING *",
+      [carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date]
+    );
+    res.json(newPet.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+//get bids
+app.get("/bids/carers/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    const result = await pool.query(
+      "SELECT carer_name, owner_name, start_date, end_date, payment_mode, payment_date, credit_card_num, delivery_method, price, bid_date, is_successful, review_date, review_content, review_rating FROM bids WHERE carer_name = $1 ORDER BY bid_date DESC",
       [carer_name]
     );
     res.json(result.rows[0]);
@@ -387,6 +539,45 @@ app.delete("/pets/:pname", async (req, res) => {
   }
 });
 
+// 1. filter carer by pet category jiaying
+app.get("/carers/:category", async (req, res) => {
+  try {
+    const { category_name } = req.params;
+    const carer = await pool.query(`
+    SELECT carer_name
+    FROM takes_care
+    WHERE category_name = $1;`, [
+  category_name
+    ]);
+    res.json(carer.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+
+// 2. get list of carer, show their ($x) category price (sort) jiaying
+app.get("/carers/price/:category", async (req, res) => {
+  try {
+    const { category_name } = req.params;
+    const carer = await pool.query(`
+    SELECT carers.username, base_price,
+    CASE WHEN base_price > 4 THEN base_price * 1.2
+      WHEN base_price > 3 THEN base_price * 1.1
+      ELSE base_price
+      END AS price
+    FROM carers, categories
+    WHERE carers.category = $1
+    ORDER BY categories.base_price;
+    `, [
+  category_name
+    ]);
+    res.json(carer.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 //3. rank owner money spend per month beining
 app.get("/owners/spend/:month/:year", async (req, res) => {
   try {
@@ -423,7 +614,61 @@ app.get("/reviews/owners/:owner_name", async (req, res) => {
   }
 });
 
+// 9. total number of pets taken care of in ($x) month (assuming month is an integer [1, 12])
+app.post("/num-pets", async (req, res) => {
+  try {
+    const { month, carer_name } = req.body;
+    const getNumPets = await pool.query(
+      "SELECT COUNT(*) FROM bids WHERE EXTRACT(MONTH FROM start_date) = $1 AND carer_name = $2;",
+      [month, carer_name]
+    );
+    res.json(getNumPets.rows[0]);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
+// 10. get monthly salary by carer name for ($x) month (assuming month is an integer [1, 12])
+app.post("/salary", async (req, res) => {
+  try {
+    const { year, month, carer_name, is_fulltime } = req.body;
+    const start_of_month = `${year}-${month}-01`
+    let base_pay = 0.0
+    let portion = 0.75;
+    let offset = 0;
+    if (is_fulltime) {
+      base_pay = 3000.0
+      portion = 0.80;
+      offset = 60;
+    }
+    let query =
+      `SELECT (SUM (b.daily_price) OVER ()) * $1 + $2 AS salary
+      FROM (
+          SELECT generate_series(
+            $3,
+            (DATE($3) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,
+            '1 day'::interval
+          )::date AS day
+      ) days_in_month
+      CROSS JOIN bids b
+      WHERE
+        b.start_date <= day AND b.end_date >= day AND
+        b.carer_name = $4
+      ORDER BY
+        day ASC,
+        daily_price ASC
+      OFFSET $5;`;
+    const getSalary = await pool.query(query, [portion, base_pay, start_of_month, carer_name, offset]);
+    if (getSalary.rows[0]) {
+      res.json(getSalary.rows[0]);
+    } else {
+      res.json({ salary: "3000.00" });
+    }
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });
-
