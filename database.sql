@@ -337,7 +337,9 @@ CREATE TRIGGER bid_turns_success
 AFTER UPDATE OF is_successful ON bids
 FOR EACH ROW EXECUTE PROCEDURE increment_working_day_pet();
 
--- Function and trigger to ensure that carer_price in takes_care table will not be lower than the base price
+---------------------------------------------------------------------------------------------------------------
+-- Function and trigger to ensure that carer_price in takes_care table will not be lower than the base price --
+---------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION base_price_check()
 RETURNS TRIGGER AS 
 $$
@@ -355,8 +357,13 @@ LANGUAGE plpgsql;
 CREATE TRIGGER base_price_check_trigger
 BEFORE UPDATE OR INSERT ON takes_care
 FOR ROW EXECUTE PROCEDURE base_price_check();
+---------------------------------------------------------------------------------------------------------------
+------------------------------------------------ END ----------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
 
--- Function and trigger to update carer_price in takes_care table when there is a new review rating
+------------------------------------------------------------------------------------------------------
+-- Function and trigger to update carer_price in takes_care table when there is a new review rating --
+------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION update_carer_price()
 RETURNS TRIGGER AS 
 $$
@@ -413,3 +420,6 @@ LANGUAGE plpgsql;
 CREATE TRIGGER update_carer_price_trigger
 BEFORE UPDATE OR INSERT ON bids
 FOR ROW EXECUTE PROCEDURE update_carer_price();
+---------------------------------------------------------------------------------------------------------------
+------------------------------------------------ END ----------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
