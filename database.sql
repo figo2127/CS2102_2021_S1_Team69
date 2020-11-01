@@ -68,6 +68,7 @@ CREATE TABLE carers(
 CREATE TABLE takes_care (
 	carer_name VARCHAR(20) NOT NULL REFERENCES carers(carer_name),
 	category_name VARCHAR(20) NOT NULL REFERENCES categories(category_name),
+	carer_price NUMERIC(5,2) NOT NULL ,
 	PRIMARY KEY(carer_name, category_name)
 );
 
@@ -169,7 +170,12 @@ INSERT INTO working_days VALUES
 ('2020-10-09', 'zz', 0),
 ('2020-10-10', 'zz', 0),
 ('2020-10-04', 'gycc', 0),
-('2020-10-05','gycc', 0);
+('2020-10-05', 'gycc', 0);
+
+INSERT INTO takes_care VALUES
+('zz', 'Cat', 50.00),
+('zz', 'Dog', 50.00),
+('gycc', 'Cat', 50.00);
 
 
 INSERT INTO bids VALUES 
@@ -276,7 +282,29 @@ SELECT review_rating, review_content, review_date
 -- 7. get number of petday for all carer in ($x) month yichao
 -- 8. get number of petday by carer_name in ($x) month yichao
 -- 9. total number of pets taken care of in ($x) month zhengzhi
+SELECT COUNT(*)
+FROM bids
+WHERE
+  EXTRACT(MONTH FROM start_date) = $1 AND
+  carer_name = $2;
 -- 10. get monthly salary by carer name for ($x) month zhengzhi
+SELECT (SUM (b.daily_price) OVER ()) * $1 + $2 AS salary
+FROM (
+    SELECT generate_series(
+      $3,
+      (DATE($3) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,
+      '1 day'::interval
+    )::date AS day
+) days_in_month
+CROSS JOIN bids b
+WHERE
+  b.start_date <= day AND b.end_date >= day AND
+  b.carer_name = $4
+ORDER BY
+  day ASC,
+  daily_price ASC
+OFFSET $5;
+
 research, securely call api with login account
 
 
@@ -308,3 +336,90 @@ LANGUAGE plpgsql;
 CREATE TRIGGER bid_turns_success
 AFTER UPDATE OF is_successful ON bids
 FOR EACH ROW EXECUTE PROCEDURE increment_working_day_pet();
+
+---------------------------------------------------------------------------------------------------------------
+-- Function and trigger to ensure that carer_price in takes_care table will not be lower than the base price --
+---------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION base_price_check()
+RETURNS TRIGGER AS 
+$$
+BEGIN
+IF
+  NEW.carer_price < (SELECT base_price FROM categories c WHERE c.category_name = NEW.category_name)
+THEN
+  RAISE EXCEPTION 'Carer price cannot be lower than base price.';
+END IF;
+RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER base_price_check_trigger
+BEFORE UPDATE OR INSERT ON takes_care
+FOR ROW EXECUTE PROCEDURE base_price_check();
+---------------------------------------------------------------------------------------------------------------
+------------------------------------------------ END ----------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------
+-- Function and trigger to update carer_price in takes_care table when there is a new review rating --
+------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION update_carer_price()
+RETURNS TRIGGER AS 
+$$
+DECLARE bid_pet_category VARCHAR;
+DECLARE category_base_price NUMERIC;
+DECLARE avg_rating NUMERIC;
+
+BEGIN
+
+SELECT belongs INTO bid_pet_category
+FROM pets p
+WHERE
+  p.pname = NEW.pname AND
+  p.owner_name = NEW.owner_name;
+
+SELECT base_price INTO category_base_price
+FROM categories c
+WHERE c.category_name = bid_pet_category;
+
+SELECT AVG(review_rating) INTO avg_rating
+FROM bids b
+WHERE
+  b.carer_name = NEW.carer_name AND
+  b.review_rating IS NOT NULL AND
+  (SELECT belongs
+  FROM pets p
+  WHERE
+    p.pname = b.pname AND
+    p.owner_name = b.owner_name
+  ) = bid_pet_category;
+
+-- NULL check
+IF
+  avg_rating IS NULL
+THEN
+  SELECT 0.0 + NEW.review_rating INTO avg_rating;
+END IF;
+
+
+IF
+  NEW.review_rating IS NOT NULL
+THEN
+  UPDATE takes_care t
+  SET carer_price = category_base_price * (1.00 + avg_rating / 10.00)
+  WHERE
+    t.carer_name = NEW.carer_name AND
+    t.category_name = bid_pet_category;
+END IF;
+RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER update_carer_price_trigger
+BEFORE UPDATE OR INSERT ON bids
+FOR ROW EXECUTE PROCEDURE update_carer_price();
+---------------------------------------------------------------------------------------------------------------
+------------------------------------------------ END ----------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
