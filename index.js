@@ -539,6 +539,45 @@ app.delete("/pets/:pname", async (req, res) => {
   }
 });
 
+// 1. filter carer by pet category jiaying
+app.get("/carers/:category", async (req, res) => {
+  try {
+    const { category_name } = req.params;
+    const carer = await pool.query(`
+    SELECT carer_name
+    FROM takes_care
+    WHERE category_name = $1;`, [
+  category_name
+    ]);
+    res.json(carer.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
+
+// 2. get list of carer, show their ($x) category price (sort) jiaying
+app.get("/carers/price/:category", async (req, res) => {
+  try {
+    const { category_name } = req.params;
+    const carer = await pool.query(`
+    SELECT carers.username, base_price,
+    CASE WHEN base_price > 4 THEN base_price * 1.2
+      WHEN base_price > 3 THEN base_price * 1.1
+      ELSE base_price
+      END AS price
+    FROM carers, categories
+    WHERE carers.category = $1
+    ORDER BY categories.base_price;
+    `, [
+  category_name
+    ]);
+    res.json(carer.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 //3. rank owner money spend per month beining
 app.get("/owners/spend/:month/:year", async (req, res) => {
   try {
