@@ -1,7 +1,10 @@
 const router = require('express').Router();
 const pool = require("../db");
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation } = require('../validation');
+
+
 //create Account
 /**
  * Need request body in format
@@ -37,21 +40,6 @@ router.post("/register", async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
-    const { error } = loginValidation(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-    const { username, password } = req.body;
-    const user = await pool.query(
-      "SELECT * FROM accounts WHERE username = $1",
-      [username]
-    );
-    //Checking if username exists
-    if (user.rows.length == 0) return res.status(400).send('username does not exist');
-    //Checkong password is correct
-    const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
-    if (!validPassword) return res.status(400).send('Incorrect password');
-    res.send('Logged In');
-});
 
 //login
 /**
@@ -60,25 +48,30 @@ router.post('/login', async (req, res) => {
  *  "username" : "activeuser",
  *  "password" : "123456"
  * }
- * if success return corresponding database row
- * else return string "Incorrect username or password"
  */
-router.get("/login", async (req, res) => {
-  try {
+router.post('/login', async (req, res) => {
+    const { error } = loginValidation(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
     const { username, password } = req.body;
     const result = await pool.query(
-      "SELECT * FROM accounts WHERE username = $1 and password = $2",
-      [username, password]
+      "SELECT * FROM accounts WHERE username = $1",
+      [username]
     );
-    if (result.rows.length == 0) {
-      res.send("Incorrect username or password");
-    } else {
-      res.json(result.rows[0]);
-    }
-  } catch (err) {
-      res.status(400).send(err);
-  }
-})
+    //Checking if username exists
+    if (result.rows.length == 0) return res.status(400).send('username does not exist');
+    //Checkong password is correct
+    const user = result.rows[0];
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) return res.status(400).send('Incorrect password');
+    
+    //Create and assign a token
+    const token = jwt.sign({ username: user.username }, process.env.TOKEN_SECRET);
+    res.header('auth-token', token).send(token);
+
+     //res.send('Logged In');
+});
+
+
 
 
 module.exports = router;

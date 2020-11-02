@@ -1,11 +1,19 @@
 const express = require("express");
 const app = express();
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 // const cors = require("cors");
+
 const pool = require("./db");
 //Import Routes
 const authRoute = require('./routes/auth');
+const ownerRoute = require('./routes/owner');
+const adminRoute = require('./routes/admin');
+const carerRoute = require('./routes/carer');
+const summaryRoute = require('./routes/summary');
 
 //middleware
 // app.use(cors());
@@ -13,205 +21,11 @@ app.use(express.json()); //req.body
 
 //Route Middlewares
 app.use('/user', authRoute);
+app.use('/owner', ownerRoute);
+app.use('/admin', adminRoute);
+app.use('/carer', carerRoute);
+app.use('/summary', summaryRoute);
 
-
-
-
-
-
-// //ROUTES//
-// app.get("/accounts", async (req, res) => {
-//   try {
-//     const allAccounts = await pool.query(
-//       "SELECT * FROM accounts"
-//     );
-//     res.json(allAccounts.rows);
-//   } catch (err) {
-//     console.log(err.message);
-//   }
-// })
-
-
-// //create Account
-// /**
-//  * Need request body in format
-//  * {
-//  *  "username" : "activeuser",
-//  *  "password" : "123456",
-//  *  "name" : "yichao",
-//  *  "phone" : "86561895",
-//  *  "area" : "South",
-//  *  "address" : "12 Kent Ridge Drive"
-//  * }
-//  * Note: area and address columns is optional
-//  * return inserted data upon success
-//  */
-// app.post("/accounts", async (req, res) => {
-//   try {
-//     // const allAccounts = await pool.query("SELECT * FROM accounts");
-//     // res.json(allAccounts.rows);
-//     const { username, password, name, phone, area, address} = req.body;
-//     const newAccount = await pool.query(
-//       "INSERT INTO accounts (username, password, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
-//       [username, password, name, phone, area, address]
-//     );
-//     res.json(newAccount.rows[0]);
-//   } catch (err) {
-//     console.error(err.message);
-//   }
-// })
-
-// //login
-// /**
-//  * Need request body in format
-//  * {
-//  *  "username" : "activeuser",
-//  *  "password" : "123456"
-//  * }
-//  * if success return corresponding database row
-//  * else return string "Incorrect username or password"
-//  */
-// app.get("/accounts/login", async (req, res) => {
-//   try {
-//     const { username, password } = req.body;
-//     const result = await pool.query(
-//       "SELECT * FROM accounts WHERE username = $1 and password = $2",
-//       [username, password]
-//     );
-//     if (result.rows.length == 0) {
-//       res.send("Incorrect username or password");
-//     } else {
-//       res.json(result.rows[0]);
-//     }
-//   } catch (err) {
-//     console.error(err.message);
-//   }
-// })
-
-// /**
-//  * input format
-//  * {
-//  *  "carer_name" : "zz"
-//  * }
-//  * output a single integer
-//  * get the number of pet days of a carer in current month
-//  * checked correct
-//  */
-// app.get("/carers/getpetdayofcurrentmonth", async (req, res) => {
-//   try {
-//     var today = new Date();
-//     var currentYear = today.getFullYear();
-//     var currentMonth = today.getMonth() + 1;
-//     var startOfMonthDate = new Date(currentYear, currentMonth - 1, "01");
-//     var startOfNextMonthDate = new Date(currentYear, currentMonth, "01");
-//     const {carer_name} = req.body;
-//     const result = await pool.query(`
-//       SELECT * FROM bids 
-//       WHERE carer_name = $1
-//       AND is_successful = TRUE
-//       AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
-//       AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
-//       [carer_name, currentYear, currentMonth]
-//     );
-//     var sum = 0;
-//     var tuples = result.rows;
-//     for (var i = 0; i < tuples.length; i++) {
-//       var rowObj = tuples[i];
-//       var start = rowObj.start_date;
-//       var end = rowObj.end_date;
-//       var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
-//       var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
-//       var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
-//       sum += days;
-//     }
-//     res.send("" + sum);
-//   } catch (err) {
-//     console.log("Error in getting carer's petday of current month");
-//     console.error(err);
-//   }
-// })
-
-// /**
-//  * input of format
-//  * {
-//  *  "particularYear" : "2020",
-//  *  "particularMonth": "10",
-//  *  "carer_name"     : "zz"
-//  * }
-//  * output a single integer
-//  * get the number of pet days of a carer in a particular month
-//  * checked correct
-//  */
-// app.get("/carers/getpetdayofparticularmonth", async (req, res) => {
-//   try {
-//     var {particularYear, particularMonth, carer_name} = req.body;
-//     var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
-//     var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
-//     const result = await pool.query(`
-//       SELECT * FROM bids 
-//       WHERE carer_name = $1
-//       AND is_successful = TRUE
-//       AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
-//       AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
-//       [carer_name, particularYear, particularMonth]
-//     );
-//     var sum = 0;
-//     var tuples = result.rows;
-//     for (var i = 0; i < tuples.length; i++) {
-//       var rowObj = tuples[i];
-//       var start = rowObj.start_date;
-//       var end = rowObj.end_date;
-//       var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
-//       var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
-//       var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
-//       sum += days;
-//     }
-//     res.send("" + sum);
-//   } catch (err) {
-//     console.log("Error in getting carer's petday of particular month");
-//     console.error(err);
-//   }
-// })
-
-// /**
-//  * input of format
-//  * {
-//  *  "particularYear" : "2020",
-//  *  "particularMonth": "10",
-//  * }
-//  * output a single integer
-//  * get the number of pet days of a carer in a particular month
-//  * checked correct
-//  */
-// app.get("/summary/gettotalpetdayofparticularmonth", async (req, res) => {
-//   try {
-//     var {particularYear, particularMonth} = req.body;
-//     var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
-//     var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
-//     const result = await pool.query(`
-//       SELECT * FROM bids
-//       where is_successful = TRUE
-//       AND (EXTRACT(year from start_date) = $1 OR EXTRACT(year from end_date) = $1) 
-//       AND (EXTRACT(month from start_date) = $2 OR EXTRACT(month from end_date) = $2)`,
-//       [particularYear, particularMonth]
-//     );
-//     var sum = 0;
-//     var tuples = result.rows;
-//     for (var i = 0; i < tuples.length; i++) {
-//       var rowObj = tuples[i];
-//       var start = rowObj.start_date;
-//       var end = rowObj.end_date;
-//       var actualStart = startOfMonthDate > start ? startOfMonthDate : start;
-//       var actualEnd = startOfNextMonthDate < end ? startOfNextMonthDate : end;
-//       var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
-//       sum += days;
-//     }
-//     res.send("" + sum);
-//   } catch (err) {
-//     console.log("Error in getting total petday of particular month");
-//     console.error(err);
-//   }
-// })
 
 // //getOwnerInfo
 // /**

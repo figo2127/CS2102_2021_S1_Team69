@@ -16,10 +16,9 @@ const registerValidation = data => {
         phone: Joi.string()
             .required(),
         area: Joi.string()
-            .min(3).required(),
+            .min(3),
         address: Joi.string()
             .min(6)
-            .required()
     });
     return  schema.validate(data);
 };
