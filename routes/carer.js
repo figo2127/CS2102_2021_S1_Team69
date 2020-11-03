@@ -1,7 +1,42 @@
 const router = require('express').Router();
 const { authUser } = require('./verifyToken');
-const { canViewPetDayInfo } = require('../permissions/carer');
 const pool = require("../db");
+
+// 1. filter carer by pet category jiaying
+router.get("/:category_name", async (req, res) => {
+    try {
+      const { category_name } = req.params;
+      const carer = await pool.query(`
+      SELECT carer_name
+      FROM takes_care
+      WHERE category_name = $1;`, [
+        category_name
+      ]);
+      res.json(carer.rows);
+    } catch (err) {
+      console.error(err.message);
+    }
+  });
+
+
+// 2. get list of carer, show their ($x) category price (sort) jiaying
+router.get("/price/:category_name", async (req, res) => {
+    try {
+      const { category_name } = req.params;
+      const carer = await pool.query(`
+      SELECT takes_care.carer_name, takes_care.carer_price
+      FROM takes_care, categories
+      WHERE takes_care.category_name = categories.category_name
+      AND takes_care.category_name = $1
+      ORDER BY takes_care.carer_price;
+      `, [
+        category_name
+      ]);
+      res.json(carer.rows);
+    } catch (err) {
+      console.error(err.message);
+    }
+  });
 
 /**
  * input format
@@ -12,7 +47,7 @@ const pool = require("../db");
  * get the number of pet days of a carer in current month
  * checked correct
  */
-router.get("/petdayofcurrentmonth", authUser, canViewPetDayInfo, async (req, res) => {
+router.get("/petdayofcurrentmonth", authUser, async (req, res) => {
   try {
     var today = new Date();
     var currentYear = today.getFullYear();
@@ -57,7 +92,7 @@ router.get("/petdayofcurrentmonth", authUser, canViewPetDayInfo, async (req, res
  * get the number of pet days of a carer in a particular month
  * checked correct
  */
-router.get("/petdayofparticularmonth", authUser, canViewPetDayInfo, async (req, res) => {
+router.get("/petdayofparticularmonth", authUser, async (req, res) => {
   try {
     var {particularYear, particularMonth, carer_name} = req.body;
     var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");

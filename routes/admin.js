@@ -1,8 +1,6 @@
 const router = require('express').Router();
-const { authUser } = require('./verifyToken');
-const { authAdmin } = require('../permissions/admin');
+const { authUser, authAdmin } = require('./verifyToken');
 const pool = require("../db");
-
 
 router.get("/accounts", authUser, authAdmin, async (req, res) => {
   try {

@@ -1,6 +1,5 @@
 const router = require('express').Router();
-const { authUser } = require('./verifyToken');
-const { authAdmin } = require('../permissions/admin');
+const { authUser, authAdmin } = require('./verifyToken');
 const pool = require("../db");
 
 //add a new category

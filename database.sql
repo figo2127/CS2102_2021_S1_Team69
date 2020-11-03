@@ -60,7 +60,7 @@ CREATE TABLE credit_cards(
 CREATE TABLE carers(
  carer_name VARCHAR(20) NOT NULL REFERENCES accounts(username),
  rating NUMERIC(3, 2),
- isFullTime BOOL NOT NULL,
+ is_fulltime BOOL NOT NULL,
  PRIMARY KEY(carer_name)
 );
 

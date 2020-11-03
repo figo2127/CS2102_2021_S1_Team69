@@ -6,19 +6,17 @@ const { registerValidation, loginValidation } = require('../validation');
 
 
 //create an admin account
-/**
- * Need request body in format
- * {
- *  "username" : "activeuser",
- *  "password" : "123456",
- *  "name" : "yichao",
- *  "phone" : "86561895",
- *  "area" : "South",
- *  "address" : "12 Kent Ridge Drive"
- * }
- * Note: area and address columns is optional
- * return inserted data upon success
- */
+
+// Need request body in format
+// {
+// "username" : "superadmin",
+// "password" : "superadmin",
+// "name" : "beining",
+// "phone" : "87654321"
+// }
+// Note: area and address columns is optional
+// return inserted data upon success
+
 router.post("/register/admin", async (req, res) => {
     
     const { error } = registerValidation(req.body);
@@ -148,8 +146,7 @@ router.post('/login', async (req, res) => {
     
     //Create and assign a token
     const token = jwt.sign({ username: user.username }, process.env.TOKEN_SECRET);
-    res.header('auth-token', token).send(token);
-
+    res.status(200).header('auth-token', token).send(token);
      //res.send('Logged In');
 });
 
