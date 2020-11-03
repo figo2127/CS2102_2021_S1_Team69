@@ -20,66 +20,13 @@ const summaryRoute = require('./routes/summary');
 app.use(express.json()); //req.body
 
 //Route Middlewares
-app.use('/user', authRoute);
+app.use('/auth', authRoute);
 app.use('/owner', ownerRoute);
 app.use('/admin', adminRoute);
 app.use('/carer', carerRoute);
 app.use('/summary', summaryRoute);
 
 
-// //getOwnerInfo
-// /**
-//  * need request body in format
-//  * {
-//  *  "username" : "activeuser"
-//  * }
-//  * return combined json result from accounts table and owners table
-//  * Unchecked due to no owner table created yet
-//  */
-// app.get("/owners/:username", async (req, res) => {
-//   try {
-//     const { username } = req.body;
-//     const result = await pool.query(
-//       "SELECT * FROM owners WHERE username = $1",
-//       [username]
-//     );
-//     const result2 = await pool.query(
-//       "SELECT * FROM accounts WHERE username = $1",
-//       [username]
-//     );
-//     const combinedResult = result.rows[0].concat(result2.rows[0]);
-//     res.json(combinedResult);
-//   } catch (err) {
-//     console.error(err.message);
-//   }
-// })
-
-// //update Owner Info
-// /**
-//  * Unchecked due to no owner table created yet
-//  */
-// app.put("/owners/:username", async (req, res) => {
-//   try {
-//     const { username } = req.params;
-//     const { password, name, phone, area, address } = req.body;
-//     const updateOwnerInfo = await pool.query(
-//       "UPDATE accounts SET password = $2, name = $3, phone = $4, area = $5, address = $6 WHERE username = $7",
-//       [password, name, phone, area, address, username]
-//     );
-//     res.send("Owner info updated successfully")
-//   } catch (err) {
-//     console.error(err.message);
-//   }
-// })
-
-// app.get("/admins", async (req, res) => {
-//   try {
-//     const allAdmins = await pool.query("SELECT * FROM admin");
-//     res.json(allAdmins.rows);
-//   } catch (err) {
-//     console.error(err.message);
-//   }
-// })
 
 // // app.post("/accounts", async (req, res) => {
 // //   try{

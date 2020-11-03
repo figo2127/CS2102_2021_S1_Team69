@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation } = require('../validation');
 
 
-//create Account
+//create an admin account
 /**
  * Need request body in format
  * {
@@ -19,7 +19,7 @@ const { registerValidation, loginValidation } = require('../validation');
  * Note: area and address columns is optional
  * return inserted data upon success
  */
-router.post("/register", async (req, res) => {
+router.post("/register/admin", async (req, res) => {
     
     const { error } = registerValidation(req.body);
     if (error) return res.status(400).send(error.details[0].message);
@@ -34,7 +34,89 @@ router.post("/register", async (req, res) => {
         "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
         [username, hashPassword, name, phone, area, address]
         );
-        res.json({ username: newAccount.rows[0].username});
+        newAccount = await pool.query(
+            "INSERT INTO admins VALUES($1) RETURNING *",
+            [username]
+        );
+        res.json({ admin_name: newAccount.rows[0].username});
+    } catch (err) {
+        return res.status(400).send(err.message);
+    }
+});
+
+//create an owner account
+/**
+ * Need request body in format
+ * {
+ *  "username" : "activeuser",
+ *  "password" : "123456",
+ *  "name" : "yichao",
+ *  "phone" : "86561895",
+ *  "area" : "South",
+ *  "address" : "12 Kent Ridge Drive"
+ * }
+ * Note: area and address columns is optional
+ * return inserted data upon success
+ */
+router.post("/register/owner", async (req, res) => {
+    
+    const { error } = registerValidation(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    //Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(req.body.password, salt);
+
+    try {
+        const { username, name, phone, area, address} = req.body;
+        const newAccount = await pool.query(
+        "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
+        [username, hashPassword, name, phone, area, address]
+        );
+        newAccount = await pool.query(
+            "INSERT INTO owners VALUES($1) RETURNING *",
+            [username]
+        );
+        res.json({ owner_name: newAccount.rows[0].username});
+    } catch (err) {
+        return res.status(400).send(err.message);
+    }
+});
+
+//create an carer account
+/**
+ * Need request body in format
+ * {
+ *  "username" : "activeuser",
+ *  "password" : "123456",
+ *  "name" : "yichao",
+ *  "phone" : "86561895",
+ *  "area" : "South",
+ *  "address" : "12 Kent Ridge Drive"
+ * }
+ * Note: area and address columns is optional
+ * return inserted data upon success
+ */
+router.post("/register/carer", async (req, res) => {
+    
+    const { error } = registerValidation(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    //Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(req.body.password, salt);
+
+    try {
+        const { username, name, phone, area, address} = req.body;
+        const newAccount = await pool.query(
+        "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
+        [username, hashPassword, name, phone, area, address]
+        );
+        newAccount = await pool.query(
+            "INSERT INTO carers VALUES($1) RETURNING *",
+            [username]
+        );
+        res.json({ carer_name: newAccount.rows[0].username});
     } catch (err) {
         return res.status(400).send(err.message);
     }

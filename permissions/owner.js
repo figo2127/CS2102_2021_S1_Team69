@@ -7,6 +7,14 @@ function canViewOwnerInfo(user, ownerInfo) { //only admin or the owner himself c
     )
 }
 
+function canUpdateOwnerInfo(user, ownerInfo) { //only admin or the owner himself can view his info
+    return (
+        isAdmin(user) ||
+        ownerInfo.owner_name === user.username
+    )
+}
+
 module.exports = {
-    canViewOwnerInfo
+    canViewOwnerInfo,
+    canUpdateOwnerInfo
 }
