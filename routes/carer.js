@@ -3,6 +3,68 @@ const { authUser } = require('./verifyToken');
 const { canViewPetDayInfo } = require('../permissions/carer');
 const pool = require("../db");
 
+
+// get list of carers
+// tested
+router.get("/", async (req, res) => {
+  try {
+    const allCarers = await pool.query(
+      "SELECT * FROM carers"
+    );
+    res.json(allCarers.rows);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
+//get all reviews for a carer sort by review_rating
+//tested
+router.get("/reviews-by-rating/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    const result = await pool.query(
+      "SELECT review_rating, review_content, review_date FROM bids WHERE carer_name = $1 AND review_rating IS NOT NULL ORDER BY review_rating DESC",
+      [carer_name]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+//tested
+router.get("/get-carer-by-rating-category", async (req, res) => {
+  try {
+    const { rating, category } = req.body;
+    const result = await pool.query(
+      "SELECT * FROM carers WHERE rating = $1 AND carer_name IN (SELECT carer_name FROM takes_care WHERE category_name = $2)",
+      [rating, category]
+    );
+    if (result.rows.length == 0) {
+      res.send("No such carer");
+    } else {
+      res.json(result.rows);
+    }
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
+//get all reviews for a carer sorted by date
+//tested
+router.get("/reviews-by-date/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    const result = await pool.query(
+      "SELECT review_rating, review_content FROM bids WHERE carer_name = $1 AND review_date IS NOT NULL ORDER BY review_date DESC",
+      [carer_name]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+
 /**
  * input format
  * {
@@ -12,7 +74,8 @@ const pool = require("../db");
  * get the number of pet days of a carer in current month
  * checked correct
  */
-router.get("/petdayofcurrentmonth", authUser, canViewPetDayInfo, async (req, res) => {
+//tested
+router.get("/petday-of-currentmonth", authUser, async (req, res) => {
   try {
     var today = new Date();
     var currentYear = today.getFullYear();
@@ -46,30 +109,31 @@ router.get("/petdayofcurrentmonth", authUser, canViewPetDayInfo, async (req, res
   }
 })
 
-/**
- * input of format
- * {
- *  "particularYear" : "2020",
- *  "particularMonth": "10",
- *  "carer_name"     : "zz"
- * }
- * output a single integer
- * get the number of pet days of a carer in a particular month
- * checked correct
- */
-router.get("/petdayofparticularmonth", authUser, canViewPetDayInfo, async (req, res) => {
+//
+// input of format
+// {
+//  "particular_year" : "2020",
+//  "particular_month": "10",
+//  "carer_name"     : "zz"
+// }
+// output a single integer
+// get the number of pet days of a carer in a particular month
+// checked correct
+//
+//tested
+router.get("/petday-of-particular-month", authUser, async (req, res) => {
   try {
-    var {particularYear, particularMonth, carer_name} = req.body;
-    var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
-    var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
+    var {particular_year, particular_month, carer_name} = req.body;
+    var startOfMonthDate = new Date(particular_year, particular_month - 1, "01");
+    var startOfNextMonthDate = new Date(particular_year, particular_month, "01");
     const result = await pool.query(`
       SELECT * FROM bids 
       WHERE carer_name = $1
       AND is_successful = TRUE
       AND (EXTRACT(year from start_date) = $2 OR EXTRACT(year from end_date) = $2) 
       AND (EXTRACT(month from start_date) = $3 OR EXTRACT(month from end_date) = $3)`,
-      [carer_name, particularYear, particularMonth]
-    );
+      [carer_name, particular_year, particular_month]
+    );  
     var sum = 0;
     var tuples = result.rows;
     for (var i = 0; i < tuples.length; i++) {
