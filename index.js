@@ -14,6 +14,7 @@ const ownerRoute = require('./routes/owner');
 const adminRoute = require('./routes/admin');
 const carerRoute = require('./routes/carer');
 const summaryRoute = require('./routes/summary');
+const categoryRoute = require('./routes/category');
 
 //middleware
 // app.use(cors());
@@ -21,36 +22,25 @@ app.use(express.json()); //req.body
 
 //Route Middlewares
 app.use('/auth', authRoute);
-app.use('/owner', ownerRoute);
-app.use('/admin', adminRoute);
-app.use('/carer', carerRoute);
+app.use('/owners', ownerRoute);
+app.use('/admins', adminRoute);
+app.use('/carers', carerRoute);
 app.use('/summary', summaryRoute);
+app.use('/categories', categoryRoute);
 
 
 
-// // app.post("/accounts", async (req, res) => {
-// //   try{
-// //     const { desc } = req.body;
-// //     console.log(desc);
-// //     res.json(req);
-// //   } catch (err) {
-// //     console.error(err.message);
-// //   }
-// // })
-
-// //add a new category
-// app.post("/categories", async (req, res) => {
+// app.post("/accounts", async (req, res) => {
 //   try{
-//     const { category_name, base_price } = req.body;
-//     const newCategory = await pool.query(
-//       "INSERT INTO categories (category_name, base_price) VALUES($1, $2) RETURNING *",
-//       [category_name, base_price]
-//     );
-//     res.json(newCategory.rows[0]);
+//     const { desc } = req.body;
+//     console.log(desc);
+//     res.json(req);
 //   } catch (err) {
 //     console.error(err.message);
 //   }
 // })
+
+
 
 
 // //get all categories
