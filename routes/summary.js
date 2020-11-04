@@ -149,4 +149,49 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
     console.log(err.message);
   }
 })
+
+//  get total monthly salary for xx month (assuming month is an integer [1, 12])
+// summary/salary/10/2020/gycc
+router.get("/totalsalary/:month/:year/", async (req, res) => {
+  try {
+    const { year, month, carer_name } = req.params;
+    const start_of_month = `${year}-${month}-01`
+    let base_pay = 0.0
+    let portion = 0.75;
+    let offset = 0;
+    const isFulltime =  await pool.query(
+        `SELECT is_fulltime FROM carers WHERE carer_name = $1`, [carer_name]);
+    if (!isFulltime.rows[0]) return res.status(400).send('Incorrect carer name');
+    if (isFulltime.rows[0]) {
+      base_pay = 3000.0
+      portion = 0.80;
+      offset = 60;
+    }
+    let query =
+      `SELECT (SUM (b.daily_price) OVER ()) * $1 + $2 AS salary
+      FROM (
+          SELECT generate_series(
+            $3,
+            (DATE($3) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,
+            '1 day'::interval
+          )::date AS day
+      ) days_in_month
+      CROSS JOIN bids b
+      WHERE
+        b.start_date <= day AND b.end_date >= day AND
+        b.carer_name = $4
+      ORDER BY
+        day ASC,
+        daily_price ASC
+      OFFSET $5;`;
+    const getSalary = await pool.query(query, [portion, base_pay, start_of_month, carer_name, offset]);
+    if (getSalary.rows[0]) {
+      res.json(getSalary.rows[0]);
+    } else {
+      res.json({ salary: "3000.00" });
+    }
+  } catch (err) {
+    console.log(err.message);
+  }
+})
 module.exports = router;
