@@ -12,17 +12,17 @@ const pool = require("../db");
  * get the number of pet days of a carer in a particular month
  * checked correct
  */
-router.get("/gettotalpetdayofparticularmonth", authUser, authAdmin, async (req, res) => {
+router.get("/total-petday-of-particular-month/:year/:month", async (req, res) => {
   try {
-    var {particularYear, particularMonth} = req.body;
-    var startOfMonthDate = new Date(particularYear, particularMonth - 1, "01");
-    var startOfNextMonthDate = new Date(particularYear, particularMonth, "01");
+    var {year, month} = req.params;
+    var startOfMonthDate = new Date(year, month - 1, "01");
+    var startOfNextMonthDate = new Date(year, month, "01");
     const result = await pool.query(`
       SELECT * FROM bids
       where is_successful = TRUE
       AND (EXTRACT(year from start_date) = $1 OR EXTRACT(year from end_date) = $1) 
       AND (EXTRACT(month from start_date) = $2 OR EXTRACT(month from end_date) = $2)`,
-      [particularYear, particularMonth]
+      [year, month]
     );
     var sum = 0;
     var tuples = result.rows;
@@ -35,7 +35,10 @@ router.get("/gettotalpetdayofparticularmonth", authUser, authAdmin, async (req, 
       var days = Math.round((actualEnd - actualStart)/(1000 * 60 * 60 * 24)) + 1;
       sum += days;
     }
-    res.send("" + sum);
+    var jsonObj = new Object();
+    jsonObj["sum"] = sum;
+    var jsonString = JSON.stringify(jsonObj);
+    res.json(jsonString);
   } catch (err) {
     console.log("Error in getting total petday of particular month");
     console.error(err);
