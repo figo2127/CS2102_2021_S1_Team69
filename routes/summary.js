@@ -85,6 +85,26 @@ router.get("/num-pets/:month/:year/:carer_name", authUser, async (req, res) => {
   }
 })
 
+//total number of pets taken care of in xx month (assuming month is an integer [1, 12])
+// /summary/num-pets/10/2020/gycc
+router.get("/num-pets/:year/:month", async (req, res) => {
+  try {
+    const { month, year } = req.params;
+    // const monthInt = parseInt(month);
+    // const yearInt = parseInt(year);
+    const getNumPets = await pool.query(
+        `SELECT COUNT(*) 
+        FROM bids 
+        WHERE EXTRACT(MONTH FROM start_date) = $1
+        AND EXTRACT(YEAR FROM start_date) = $2;`,
+      [month, year]
+    );
+    res.json(getNumPets.rows[0]);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
 //  get monthly salary by carer name for xx month (assuming month is an integer [1, 12])
 // summary/salary/10/2020/gycc
 router.get("/salary/:month/:year/:carer_name", async (req, res) => {
