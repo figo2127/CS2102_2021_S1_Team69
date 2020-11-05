@@ -21,6 +21,7 @@ const summaryRoute = require('./routes/summary');
 const categoryRoute = require('./routes/category');
 const petRoute = require('./routes/pet');
 const creditCardRoute = require('./routes/creditcard');
+const bidRoute = require('./routes/bid');
 
 //middleware
 // app.use(cors());
@@ -35,6 +36,7 @@ app.use('/summary', summaryRoute);
 app.use('/categories', categoryRoute);
 app.use('/pets', petRoute);
 app.use('/credit_cards', creditCardRoute);
+app.use('/bids', bidRoute);
 
 app.listen(PORT, () => {
   console.log(`server has started on port ${PORT}`);
