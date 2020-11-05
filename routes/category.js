@@ -1,11 +1,16 @@
 const router = require('express').Router();
 const { authUser, authAdmin } = require('./verifyToken');
 const pool = require("../db");
+var express = require('express');
+var bodyParser = require('body-parser');
+var multer = require('multer');
+var upload = multer();
 
 //add a new category
 //tested
-router.post("/", authUser, authAdmin, async (req, res) => {
+router.post("/", async (req, res) => {
     try{
+      // console.log(req.body);
       const { category_name, base_price } = req.body;
       const newCategory = await pool.query(
         "INSERT INTO categories (category_name, base_price) VALUES($1, $2) RETURNING *",
@@ -19,10 +24,10 @@ router.post("/", authUser, authAdmin, async (req, res) => {
 
 //update a category
 //tested
-router.put("/:category_name", authUser, authAdmin, async (req, res) => {
+router.post("/edit", async (req, res) => {
   try {
-    const { category_name  } = req.params;
-    const { base_price } = req.body;
+    console.log(req.body);
+    const { category_name, base_price } = req.body;
     const updateCategory = await pool.query(
       "UPDATE categories SET base_price = $1 WHERE category_name = $2",
       [base_price, category_name]
@@ -58,9 +63,10 @@ router.get("/:category_name", async (req, res) => {
 
 //delete a category
 //tested
-router.delete("/:category_name", authUser, authAdmin, async (req, res) => {
+router.post("/delete", async (req, res) => {
   try {
-    const { category_name } = req.params;
+    console.log("deleting");
+    const { category_name } = req.body;
     const deleteCategory = await pool.query("DELETE FROM categories WHERE category_name = $1", [
       category_name
     ]);
