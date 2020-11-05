@@ -153,7 +153,7 @@ router.post('/login', async (req, res) => {
         exists (select * from owners where owner_name = $1) as isOwner
     `, [username]);
     const userType = ["admin", "carer", "owner"].filter((type) => getUserType.rows[0][`is${type}`]);
-    res.status(200).header('auth-token', token).json({ userType, token });
+    res.status(200).header('auth-token', token).json({ userType, token, username });
 });
 
 
