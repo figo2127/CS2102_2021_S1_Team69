@@ -28,7 +28,7 @@ router.post("/register/admin", async (req, res) => {
 
     try {
         const { username, name, phone, area, address} = req.body;
-        const newAccount = await pool.query(
+        let newAccount = await pool.query(
         "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
         [username, hashPassword, name, phone, area, address]
         );
@@ -36,7 +36,7 @@ router.post("/register/admin", async (req, res) => {
             "INSERT INTO admins VALUES($1) RETURNING *",
             [username]
         );
-        res.json({ admin_name: newAccount.rows[0].username});
+        res.send(`Admin account with username ${username} has been created!`)
     } catch (err) {
         return res.status(400).send(err.message);
     }
@@ -67,7 +67,7 @@ router.post("/register/owner", async (req, res) => {
 
     try {
         const { username, name, phone, area, address} = req.body;
-        const newAccount = await pool.query(
+        let newAccount = await pool.query(
         "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
         [username, hashPassword, name, phone, area, address]
         );
@@ -75,7 +75,7 @@ router.post("/register/owner", async (req, res) => {
             "INSERT INTO owners VALUES($1) RETURNING *",
             [username]
         );
-        res.json({ owner_name: newAccount.rows[0].username});
+        res.send(`Owner account with username ${username} has been created!`)
     } catch (err) {
         return res.status(400).send(err.message);
     }
@@ -106,15 +106,15 @@ router.post("/register/carer", async (req, res) => {
 
     try {
         const { username, name, phone, area, address} = req.body;
-        const newAccount = await pool.query(
+        let newAccount = await pool.query(
         "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
         [username, hashPassword, name, phone, area, address]
         );
         newAccount = await pool.query(
-            "INSERT INTO carers VALUES($1) RETURNING *",
+            "INSERT INTO carers VALUES($1, null, false) RETURNING *",
             [username]
         );
-        res.json({ carer_name: newAccount.rows[0].username});
+        res.send(`Carer account with username ${username} has been created!`)
     } catch (err) {
         return res.status(400).send(err.message);
     }
@@ -138,7 +138,7 @@ router.post('/login', async (req, res) => {
       [username]
     );
     //Checking if username exists
-    if (result.rows.length == 0) return res.status(400).send('username does not exist');
+    if (result.rows.length == 0) return res.status(400).send('Username does not exist');
     //Checkong password is correct
     const user = result.rows[0];
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -146,8 +146,14 @@ router.post('/login', async (req, res) => {
     
     //Create and assign a token
     const token = jwt.sign({ username: user.username }, process.env.TOKEN_SECRET);
-    res.status(200).header('auth-token', token).send(token);
-     //res.send('Logged In');
+    const getUserType = await pool.query(`
+    SELECT
+        exists (select * from admins where admin_name = $1) as isAdmin,
+        exists (select * from carers where carer_name = $1) as isCarer,
+        exists (select * from owners where owner_name = $1) as isOwner
+    `, [username]);
+    const userType = ["admin", "carer", "owner"].filter((type) => getUserType.rows[0][`is${type}`]);
+    res.status(200).header('auth-token', token).json({ userType, token });
 });
 
 

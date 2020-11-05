@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded());
 // in latest body-parser use like below.
 app.use(bodyParser.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 5000;
-// const cors = require("cors");
+const cors = require("cors");
 
 const pool = require("./db");
 //Import Routes
@@ -23,7 +23,7 @@ const petRoute = require('./routes/pet');
 const creditCardRoute = require('./routes/creditcard');
 
 //middleware
-// app.use(cors());
+app.use(cors());
 app.use(express.json()); //req.body
 
 //Route Middlewares
