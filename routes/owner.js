@@ -62,6 +62,17 @@ router.get("/reviews/:owner_name", authUser, async (req, res) => {
   }
 });
 
+// get all bids by owner name
+router.get("/bids/:owner_name", async (req, res) => {
+  try {
+    const { owner_name } = req.params;
+    const getBids = await pool.query(`SELECT * FROM bids WHERE owner_name = $1;`, [owner_name]);
+    res.json(getBids.rows);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
 // get list of sucess bids by owner name 
 // router.post("/bids/:owner_name", async (req, res) => {
 //   try {

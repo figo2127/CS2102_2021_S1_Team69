@@ -161,6 +161,10 @@ INSERT INTO pets VALUES
 ('meow', 'jy', 'NA', 'Cat');
 
 INSERT INTO working_days VALUES
+('2020-09-17', 'zz', 0),
+('2020-09-18', 'zz', 0),
+('2020-09-19', 'zz', 0),
+('2020-09-20', 'zz', 0),
 ('2020-10-04', 'zz', 0),
 ('2020-10-05', 'zz', 0),
 ('2020-10-06', 'zz', 0),
@@ -178,6 +182,7 @@ INSERT INTO takes_care VALUES
 
 
 INSERT INTO bids VALUES 
+('2020-09-17', '2020-09-20', 'zz', 'dearvae', 'manman', '2020-08-20', 55.5, 'false', null, '2020-08-21', 'cash', 'pick up', null, null, null),
 ('2020-10-04', '2020-10-08', 'zz', 'dearvae', 'kuaikuai', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', 4, 'very good', '2020-10-09'),
 ('2020-10-04', '2020-10-08', 'zz', 'dearvae', 'doggo', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', null, null, null),
 ('2020-10-04', '2020-10-08', 'zz', 'dearvae', 'manman', '2020-09-20', 55.5, 'true', null, '2020-09-21', 'cash', 'pick up', null, null, null),
