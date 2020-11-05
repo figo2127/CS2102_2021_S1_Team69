@@ -152,7 +152,7 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
 
 //  get total monthly salary for xx month (assuming month is an integer [1, 12])
 // summary/salary/10/2020/gycc
-router.get("/totalsalary/:month/:year/", async (req, res) => {
+router.get("/totalsalary/:month/:year/:carer_name", async (req, res) => {
   try {
     const { year, month, carer_name } = req.params;
     const start_of_month = `${year}-${month}-01`
