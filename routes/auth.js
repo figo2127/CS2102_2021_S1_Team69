@@ -96,7 +96,6 @@ router.post("/register/owner", async (req, res) => {
  * return inserted data upon success
  */
 router.post("/register/carer", async (req, res) => {
-    
     const { error } = registerValidation(req.body);
     if (error) return res.status(400).send(error.details[0].message);
 
@@ -105,14 +104,14 @@ router.post("/register/carer", async (req, res) => {
     const hashPassword = await bcrypt.hash(req.body.password, salt);
 
     try {
-        const { username, name, phone, area, address} = req.body;
+        const { username, name, phone, area, address, isFulltime} = req.body;
         let newAccount = await pool.query(
         "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
         [username, hashPassword, name, phone, area, address]
         );
         newAccount = await pool.query(
-            "INSERT INTO carers VALUES($1, null, false) RETURNING *",
-            [username]
+            "INSERT INTO carers VALUES($1, null, $2) RETURNING *",
+            [username, isFulltime === 'true']
         );
         res.send(`Carer account with username ${username} has been created!`)
     } catch (err) {
