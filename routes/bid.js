@@ -2,6 +2,24 @@ const router = require('express').Router();
 const { authUser } = require('./verifyToken');
 const pool = require("../db");
 
+// create bid
+router.post("/", async (req, res) => {
+  try {
+    const {start_date, end_date, carer_name, owner_name, pname, bid_date, daily_price, is_successful, credit_card_num, payment_date, payment_mode, delivery_method, review_rating, review_content, review_date} = req.body;
+    const createBid = await pool.query(`
+      INSERT INTO bids VALUES
+      (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+      );
+    `,[
+      start_date, end_date, carer_name, owner_name, pname, bid_date, daily_price, is_successful, credit_card_num, payment_date, payment_mode, delivery_method, review_rating, review_content, review_date
+    ]);
+    res.status(200).json(createBid.rows);
+  } catch(err) {
+    console.log(err.message);
+  }
+})
+
 // get all bids by owner name
 router.get("/owner/:owner_name", async (req, res) => {
     try {

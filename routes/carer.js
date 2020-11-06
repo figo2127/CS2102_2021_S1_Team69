@@ -50,6 +50,29 @@ router.get("/:category_name", async (req, res) => {
     }
   });
 
+router.get('/ifavailable/:carer_name/:start_date/:end_date', async (req, res) => {
+  try {
+    const {carer_name, start_date, end_date} = req.params;
+    const start_dateobj = new Date(start_date.substring(0, 4), parseInt(start_date.substring(5,7)) - 1, parseInt(start_date.substring(8,10)) + 1);
+    const end_dateobj = new Date(end_date.substring(0, 4), parseInt(end_date.substring(5,7)) -1 , parseInt(end_date.substring(8,10)) + 1);
+    const days = (end_dateobj.getTime() - start_dateobj.getTime()) / (1000 * 3600 * 24) + 1; 
+    const query = await pool.query(`
+      SELECT 1
+      FROM carers c
+      WHERE 
+        c.carer_name = $1
+      AND
+        (SELECT COUNT(*) FROM working_days w WHERE w.carer_name = c.carer_name AND w.number_of_pets < 5 AND w.working_date >= $2 AND w.working_date <= $3) = $4;
+    `, [carer_name, start_date, end_date, days]);
+    if (query.rows.length > 0) {
+      res.json({status : "success"});
+    } else {
+      res.json({status : "fail"});
+    }
+  } catch(err) {
+    console.log(err.message);
+  }
+});
 
 // 2. get list of carer, show their ($x) category price (sort) jiaying
 router.get("/price/:category_name", async (req, res) => {
