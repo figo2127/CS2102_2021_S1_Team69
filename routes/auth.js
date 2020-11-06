@@ -162,7 +162,7 @@ router.get('/authenticate/:token', async (req, res) => {
         const result = jwt.verify(token, process.env.TOKEN_SECRET);
         res.json(result);
     } catch (err) {
-        res.status(401).send('Token is invalid')
+        res.status(401).send('Token is invalid');
     }
 });
 
