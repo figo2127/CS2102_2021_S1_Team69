@@ -156,6 +156,16 @@ router.post('/login', async (req, res) => {
     res.status(200).header('auth-token', token).json({ userType, token, username });
 });
 
+router.get('/authenticate/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const result = jwt.verify(token, process.env.TOKEN_SECRET);
+        res.json(result);
+    } catch (err) {
+        res.status(401).send('Token is invalid')
+    }
+});
+
 
 
 
