@@ -25,20 +25,25 @@ router.post("/register/admin", async (req, res) => {
     //Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(req.body.password, salt);
-
+    const client = await pool.connect();
     try {
         const { username, name, phone, area, address} = req.body;
-        let newAccount = await pool.query(
-        "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
-        [username, hashPassword, name, phone, area, address]
+        await client.query('BEGIN');
+        await client.query(
+            `INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6)`,
+            [username, hashPassword, name, phone, area, address]
         );
-        newAccount = await pool.query(
-            "INSERT INTO admins VALUES($1) RETURNING *",
+        await client.query(
+            `INSERT INTO admins VALUES($1)`,
             [username]
         );
+        await client.query('COMMIT');
         res.send(`Admin account with username ${username} has been created!`)
     } catch (err) {
+        await client.query('ROLLBACK');
         return res.status(400).send(err.message);
+    } finally {
+        client.release();
     }
 });
 
@@ -64,20 +69,25 @@ router.post("/register/owner", async (req, res) => {
     //Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(req.body.password, salt);
-
+    const client = await pool.connect();
     try {
         const { username, name, phone, area, address} = req.body;
-        let newAccount = await pool.query(
-        "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
-        [username, hashPassword, name, phone, area, address]
+        await client.query('BEGIN');
+        await client.query(
+            `INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6)`,
+            [username, hashPassword, name, phone, area, address]
         );
-        newAccount = await pool.query(
-            "INSERT INTO owners VALUES($1) RETURNING *",
+        await client.query(
+            `INSERT INTO owners VALUES($1)`,
             [username]
         );
-        res.send(`Owner account with username ${username} has been created!`)
+        await client.query('COMMIT');
+        res.send(`Admin account with username ${username} has been created!`)
     } catch (err) {
+        await client.query('ROLLBACK');
         return res.status(400).send(err.message);
+    } finally {
+        client.release();
     }
 });
 
@@ -102,20 +112,25 @@ router.post("/register/carer", async (req, res) => {
     //Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(req.body.password, salt);
-
+    const client = await pool.connect();
     try {
         const { username, name, phone, area, address, isFulltime} = req.body;
-        let newAccount = await pool.query(
-        "INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
-        [username, hashPassword, name, phone, area, address]
+        await client.query('BEGIN');
+        await client.query(
+            `INSERT INTO accounts (username, password_hash, name, phone, area, address) VALUES($1, $2, $3, $4, $5, $6)`,
+            [username, hashPassword, name, phone, area, address]
         );
-        newAccount = await pool.query(
-            "INSERT INTO carers VALUES($1, null, $2) RETURNING *",
+        await client.query(
+            `INSERT INTO carers VALUES($1, null, $2)`,
             [username, isFulltime === 'true']
         );
-        res.send(`Carer account with username ${username} has been created!`)
+        await client.query('COMMIT');
+        res.send(`Admin account with username ${username} has been created!`)
     } catch (err) {
+        await client.query('ROLLBACK');
         return res.status(400).send(err.message);
+    } finally {
+        client.release();
     }
 });
 
