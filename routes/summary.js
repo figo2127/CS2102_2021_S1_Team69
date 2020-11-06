@@ -45,6 +45,31 @@ router.get("/total-petday-of-particular-month/:year/:month", async (req, res) =>
   }
 })
 
+router.get("/total-petday-of-a-month/:year/:month", async (req, res) => {
+  try {
+    var {year, month} = req.params;
+    var startOfMonthDate = new Date(year, month - 1, "01");
+    var startOfNextMonthDate = new Date(year, month, "01");
+    var start = startOfMonthDate.toISOString().substring(0, 10);
+    // console.log(startOfMonthDate);
+    // console.log(startOfMonthDate.toISOString());
+    // console.log(startOfMonthDate.toString());
+    // console.log(startOfMonthDate.toTimeString());
+    // console.log(startOfMonthDate.toUTCString());
+    // console.log(start);
+    var end = startOfNextMonthDate.toISOString().substring(0, 10);
+    const result = await pool.query(`
+      SELECT SUM(number_of_pets) FROM working_days
+      WHERE working_date >= $1
+      AND working_date <= $2;
+    `,[start, end]);
+    res.json({petday: result.rows[0]});
+  } catch(err) {
+    console.log(err);
+  }
+}
+)
+
 //3. rank owner money spend in certain month (based on bid date)
 //e.g. summary/owner-spend-rank/10/2020
 router.get("/owner-spend-rank/:month/:year", authUser, authAdmin, async (req, res) => {
@@ -138,10 +163,10 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
     let base_pay = 0.0
     let portion = 0.75;
     let offset = 0;
-    const isFulltime =  await pool.query(
+    const is_fulltime =  await pool.query(
         `SELECT is_FullTime FROM carers WHERE carer_name = $1`, [carer_name]);
-    if (!isFulltime.rows[0]) return res.status(400).send('Incorrect carer name');
-    if (isFulltime.rows[0]) {
+    if (!is_fulltime.rows[0]) return res.status(400).send('Incorrect carer name');
+    if (is_fulltime.rows[0]) {
       base_pay = 3000.0
       portion = 0.80;
       offset = 60;
@@ -195,14 +220,14 @@ router.get("/totalsalary/:month/:year", async (req, res) => {
       `SELECT (SUM (b.daily_price) OVER ()) * (
         SELECT 
         CASE
-          WHEN c.is_FullTime = true THEN 0.80
-          WHEN c.is_FullTime = false THEN 0.75
+          WHEN c.is_fulltime = true THEN 0.80
+          WHEN c.is_fulltime = false THEN 0.75
         END
       ) + (
         SELECT
         CASE
-          WHEN c.is_FullTime = true THEN 3000
-          WHEN c.is_FullTime = false then 0
+          WHEN c.is_fulltime = true THEN 3000
+          WHEN c.is_fulltime = false then 0
         END
       ) AS salary
       FROM (
