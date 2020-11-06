@@ -7,7 +7,7 @@ const pool = require("../db");
 router.get("/", async (req, res) => {
   try {
     const allCarers = await pool.query(
-      `SELECT carer_name, rating, isfulltime, name,  phone, area FROM carers c, accounts a
+      `SELECT carer_name, rating, is_fulltime, name,  phone, area FROM carers c, accounts a
       WHERE c.carer_name = a.username;
       `
     );
@@ -22,7 +22,7 @@ router.get("/:carer_name", async (req, res) => {
   const { carer_name } = req.params;
   try {
       const result = await pool.query(
-        `SELECT carer_name, rating, isfulltime, name,  phone, area FROM carers c, accounts a
+        `SELECT carer_name, rating, is_fulltime, name,  phone, area FROM carers c, accounts a
         WHERE c.carer_name = a.username
         AND c.carer_name = $1;
         `, [carer_name]
