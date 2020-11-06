@@ -26,8 +26,10 @@ router.post("/", async (req, res) => {
 //tested
 router.post("/edit", async (req, res) => {
   try {
+    console.log("updating");
     console.log(req.body);
     const { category_name, base_price } = req.body;
+    console.log(category_name);
     const updateCategory = await pool.query(
       "UPDATE categories SET base_price = $1 WHERE category_name = $2",
       [base_price, category_name]
@@ -70,6 +72,7 @@ router.post("/delete", async (req, res) => {
     const deleteCategory = await pool.query("DELETE FROM categories WHERE category_name = $1", [
       category_name
     ]);
+    console.log(category_name + "category is deleted");
     res.json("Category was deleted!");
   } catch (err) {
     console.log(err.message);
