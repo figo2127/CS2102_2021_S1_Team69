@@ -35,16 +35,22 @@ router.get("/:carer_name", async (req, res) => {
 })
 
 // 1. filter carer by pet category jiaying
-router.get("category/:category_name", async (req, res) => {
+router.get("/category/:category_name", async (req, res) => {
     try {
       const { category_name } = req.params;
       const carer = await pool.query(`
-      SELECT carer_name
-      FROM takes_care
-      WHERE category_name = $1;`, [
+      SELECT c.carer_name,  c.rating, c.is_fulltime, a.name,  a.phone, a.area 
+      FROM takes_care tc, carers c, accounts a
+      WHERE c.carer_name = a.username
+      AND tc.carer_name = c.carer_name
+      AND category_name = $1;`, [
         category_name
       ]);
-      res.json(carer.rows);
+      if (carer.rows[0]) {
+        res.json(carer.rows);
+      } else {
+        res.status(400).send("No record found");
+      }
     } catch (err) {
       console.error(err.message);
     }
