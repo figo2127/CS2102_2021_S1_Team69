@@ -85,6 +85,30 @@ router.get("/num-pets/:month/:year/:carer_name", authUser, async (req, res) => {
   }
 })
 
+//Total number of carers we have
+router.get("/carernum", async (req, res) => {
+  try{
+    const getcarernum = await pool.query(
+      `SELECT COUNT(*) FROM carers;`
+    )
+    res.json(getcarernum.rows[0]);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
+//Total number of owners we have
+router.get("/ownernum", async (req, res) => {
+  try{
+    const getownernum = await pool.query(
+      `SELECT COUNT(*) FROM owners;`
+    )
+    res.json(getownernum.rows[0]);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
 //total number of pets taken care of in xx month (assuming month is an integer [1, 12])
 // /summary/num-pets/10/2020/gycc
 router.get("/num-pets/:year/:month", async (req, res) => {
@@ -115,7 +139,7 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
     let portion = 0.75;
     let offset = 0;
     const isFulltime =  await pool.query(
-        `SELECT is_fulltime FROM carers WHERE carer_name = $1`, [carer_name]);
+        `SELECT isFullTime FROM carers WHERE carer_name = $1`, [carer_name]);
     if (!isFulltime.rows[0]) return res.status(400).send('Incorrect carer name');
     if (isFulltime.rows[0]) {
       base_pay = 3000.0
@@ -143,7 +167,7 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
     if (getSalary.rows[0]) {
       res.json(getSalary.rows[0]);
     } else {
-      res.json({ salary: "3000.00" });
+      res.json({ salary: "2000.00" });
     }
   } catch (err) {
     console.log(err.message);
@@ -151,44 +175,52 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
 })
 
 //  get total monthly salary for xx month (assuming month is an integer [1, 12])
-// summary/salary/10/2020/gycc
-router.get("/totalsalary/:month/:year/:carer_name", async (req, res) => {
+// summary/salary/10/2020
+router.get("/totalsalary/:month/:year", async (req, res) => {
   try {
-    const { year, month, carer_name } = req.params;
+    const { year, month } = req.params;
     const start_of_month = `${year}-${month}-01`
-    let base_pay = 0.0
-    let portion = 0.75;
-    let offset = 0;
-    const isFulltime =  await pool.query(
-        `SELECT is_fulltime FROM carers WHERE carer_name = $1`, [carer_name]);
-    if (!isFulltime.rows[0]) return res.status(400).send('Incorrect carer name');
-    if (isFulltime.rows[0]) {
-      base_pay = 3000.0
-      portion = 0.80;
-      offset = 60;
-    }
+    // let base_pay = 0.0
+    // let portion = 0.75;
+    // let offset = 0;
+    // const isFulltime =  await pool.query(
+    //     `SELECT is_fulltime FROM carers WHERE carer_name = $1`, [carer_name]);
+    // if (!isFulltime.rows[0]) return res.status(400).send('Incorrect carer name');
+    // if (isFulltime.rows[0]) {
+    //   base_pay = 3000.0
+    //   portion = 0.80;
+    //   offset = 60;
+    // }
     let query =
-      `SELECT (SUM (b.daily_price) OVER ()) * $1 + $2 AS salary
+      `SELECT (SUM (b.daily_price) OVER ()) * (
+        SELECT 
+        CASE
+          WHEN c.isFullTime = true THEN 0.80
+          WHEN c.isFullTime = false THEN 0.75
+        END
+      ) + (
+        SELECT
+        CASE
+          WHEN c.isFullTime = true THEN 3000
+          WHEN c.isFullTime = false then 0
+        END
+      ) AS salary
       FROM (
           SELECT generate_series(
-            $3,
-            (DATE($3) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,
+            $1,
+            (DATE($1) + INTERVAL '1 month' - INTERVAL '1 day')::DATE,
             '1 day'::interval
           )::date AS day
-      ) days_in_month
-      CROSS JOIN bids b
+      ) days_in_month, bids b, carers c
       WHERE
-        b.start_date <= day AND b.end_date >= day AND
-        b.carer_name = $4
-      ORDER BY
-        day ASC,
-        daily_price ASC
-      OFFSET $5;`;
-    const getSalary = await pool.query(query, [portion, base_pay, start_of_month, carer_name, offset]);
+        b.start_date <= day AND b.end_date >= day 
+      AND
+        b.carer_name = c.carer_name`;
+    const getSalary = await pool.query(query, [start_of_month]);
     if (getSalary.rows[0]) {
       res.json(getSalary.rows[0]);
     } else {
-      res.json({ salary: "3000.00" });
+      res.json({ salary: "0" });
     }
   } catch (err) {
     console.log(err.message);
