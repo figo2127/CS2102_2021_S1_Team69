@@ -153,7 +153,17 @@ router.post('/login', async (req, res) => {
         exists (select * from owners where owner_name = $1) as isOwner
     `, [username]);
     const userType = ["admin", "carer", "owner"].filter((type) => getUserType.rows[0][`is${type}`]);
-    res.status(200).header('auth-token', token).json({ userType, token });
+    res.status(200).header('auth-token', token).json({ userType, token, username });
+});
+
+router.get('/authenticate/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const result = jwt.verify(token, process.env.TOKEN_SECRET);
+        res.json(result);
+    } catch (err) {
+        res.status(401).send('Token is invalid')
+    }
 });
 
 

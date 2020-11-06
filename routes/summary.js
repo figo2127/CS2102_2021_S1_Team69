@@ -139,7 +139,7 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
     let portion = 0.75;
     let offset = 0;
     const isFulltime =  await pool.query(
-        `SELECT isFullTime FROM carers WHERE carer_name = $1`, [carer_name]);
+        `SELECT is_FullTime FROM carers WHERE carer_name = $1`, [carer_name]);
     if (!isFulltime.rows[0]) return res.status(400).send('Incorrect carer name');
     if (isFulltime.rows[0]) {
       base_pay = 3000.0
@@ -195,14 +195,14 @@ router.get("/totalsalary/:month/:year", async (req, res) => {
       `SELECT (SUM (b.daily_price) OVER ()) * (
         SELECT 
         CASE
-          WHEN c.isFullTime = true THEN 0.80
-          WHEN c.isFullTime = false THEN 0.75
+          WHEN c.is_FullTime = true THEN 0.80
+          WHEN c.is_FullTime = false THEN 0.75
         END
       ) + (
         SELECT
         CASE
-          WHEN c.isFullTime = true THEN 3000
-          WHEN c.isFullTime = false then 0
+          WHEN c.is_FullTime = true THEN 3000
+          WHEN c.is_FullTime = false then 0
         END
       ) AS salary
       FROM (
