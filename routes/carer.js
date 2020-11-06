@@ -56,9 +56,13 @@ router.get("/price/:category_name", async (req, res) => {
     try {
       const { category_name } = req.params;
       const carer = await pool.query(`
-      SELECT takes_care.carer_name, takes_care.carer_price
-      FROM takes_care, categories
-      WHERE takes_care.category_name = categories.category_name
+      SELECT carers.carer_name, 
+      CASE WHEN carers.rating > 4 THEN categories.base_price * 1.2
+         WHEN carers.rating > 3 THEN categories.base_price * 1.1
+         ELSE categories.base_price
+         END AS price
+      FROM takes_care, categories, carers
+      WHERE takes_care.category_name = categories.category_name AND carers.carer_name = takes_care.carer_name
       AND takes_care.category_name = $1
       ORDER BY takes_care.carer_price;
       `, [
