@@ -322,10 +322,42 @@ research, securely call api with login account
 -- This is one off
 -- Any update on is_successful column of bids table will cause the trigger (including setting is_successful from true to false and vice versa)
 -- so needs to modify further if we want to allow rollback of a successful bid
+
 CREATE OR REPLACE FUNCTION increment_working_day_pet()
 RETURNS TRIGGER AS 
 $$
+DECLARE carer_limit INTEGER;
+
 BEGIN
+
+IF
+  NOT NEW.is_successful AND NEW.review_rating IS NULL
+THEN
+  RAISE EXCEPTION 'Bid must be successful in order to leave a review rating!';
+ELSIF
+  NOT NEW.is_successful
+THEN
+  RETURN NEW;
+END IF;
+
+IF
+  (SELECT (is_fulltime OR rating >= 4.00) FROM carers WHERE carers.carer_name = NEW.carer_name)
+THEN
+  SELECT 5 INTO carer_limit;
+ELSE
+  SELECT 2 INTO carer_limit;
+END IF;
+
+IF
+  (SELECT MAX(number_of_pets)
+  FROM working_days
+  WHERE carer_name = NEW.carer_name
+  AND working_date >= NEW.start_date
+  AND working_date <= NEW.end_date) >= carer_limit
+THEN
+  RAISE EXCEPTION 'Carer will exceed the pet days limit!';
+END IF;
+
 UPDATE working_days
 SET number_of_pets = number_of_pets + 1
 WHERE carer_name = NEW.carer_name
@@ -338,11 +370,9 @@ LANGUAGE plpgsql;
 
 CREATE TRIGGER bid_turns_success
 AFTER UPDATE OF is_successful ON bids
-FOR EACH ROW EXECUTE PROCEDURE increment_working_day_pet();
+FOR ROW EXECUTE PROCEDURE increment_working_day_pet();
 
----------------------------------------------------------------------------------------------------------------
 -- Function and trigger to ensure that carer_price in takes_care table will not be lower than the base price --
----------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION base_price_check()
 RETURNS TRIGGER AS 
 $$
@@ -360,19 +390,15 @@ LANGUAGE plpgsql;
 CREATE TRIGGER base_price_check_trigger
 BEFORE UPDATE OR INSERT ON takes_care
 FOR ROW EXECUTE PROCEDURE base_price_check();
----------------------------------------------------------------------------------------------------------------
 ------------------------------------------------ END ----------------------------------------------------------
----------------------------------------------------------------------------------------------------------------
 
-------------------------------------------------------------------------------------------------------
--- Function and trigger to update carer_price in takes_care table when there is a new review rating --
-------------------------------------------------------------------------------------------------------
+-- Function and trigger to update carer_price in takes_care table when there is a new review rating also updates carer's review --
 CREATE OR REPLACE FUNCTION update_carer_price()
 RETURNS TRIGGER AS 
 $$
 DECLARE bid_pet_category VARCHAR;
 DECLARE category_base_price NUMERIC;
-DECLARE avg_rating NUMERIC;
+DECLARE category_avg_rating NUMERIC;
 
 BEGIN
 
@@ -386,7 +412,7 @@ SELECT base_price INTO category_base_price
 FROM categories c
 WHERE c.category_name = bid_pet_category;
 
-SELECT AVG(review_rating) INTO avg_rating
+SELECT (SUM(review_rating) + NEW.review_rating + 0.0) / (COUNT(*) + 1) INTO category_avg_rating
 FROM bids b
 WHERE
   b.carer_name = NEW.carer_name AND
@@ -398,11 +424,20 @@ WHERE
     p.owner_name = b.owner_name
   ) = bid_pet_category;
 
+UPDATE carers SET rating = (
+  SELECT (SUM(review_rating) + NEW.review_rating + 0.0) / (COUNT(*) + 1)
+  FROM bids b
+  WHERE
+    b.carer_name = NEW.carer_name AND
+    b.review_rating IS NOT NULL
+)
+WHERE carers.carer_name = NEW.carer_name;
+
 -- NULL check
 IF
-  avg_rating IS NULL
+  category_avg_rating IS NULL
 THEN
-  SELECT 0.0 + NEW.review_rating INTO avg_rating;
+  SELECT 0.0 + NEW.review_rating INTO category_avg_rating;
 END IF;
 
 
@@ -410,7 +445,7 @@ IF
   NEW.review_rating IS NOT NULL
 THEN
   UPDATE takes_care t
-  SET carer_price = category_base_price * (1.00 + avg_rating / 10.00)
+  SET carer_price = category_base_price * (1.00 + category_avg_rating / 10.00)
   WHERE
     t.carer_name = NEW.carer_name AND
     t.category_name = bid_pet_category;
@@ -423,6 +458,31 @@ LANGUAGE plpgsql;
 CREATE TRIGGER update_carer_price_trigger
 BEFORE UPDATE OR INSERT ON bids
 FOR ROW EXECUTE PROCEDURE update_carer_price();
----------------------------------------------------------------------------------------------------------------
 ------------------------------------------------ END ----------------------------------------------------------
----------------------------------------------------------------------------------------------------------------
+-------Function and Trigger to recalculate carer prices whenever the base price of a category is updated-------
+CREATE OR REPLACE FUNCTION recalculate_carer_prices()
+RETURNS TRIGGER AS 
+$$
+declare loopRow RECORD;
+declare carer_rating NUMERIC;
+BEGIN
+FOR loopRow IN
+  SELECT DISTINCT carer_name FROM takes_care tc WHERE tc.category_name = OLD.category_name
+LOOP
+  SELECT rating INTO carer_rating FROM carers WHERE carer_name = loopRow.carer_name;
+  UPDATE takes_care
+  SET carer_price = CASE
+    WHEN carer_rating IS NULL
+    THEN NEW.base_price
+    ELSE NEW.base_price * (1.00 + carer_rating / 10.00) END
+  WHERE carer_name = loopRow.carer_name AND category_name = OLD.category_name;
+END LOOP;
+RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER recalculate_carer_price_trigger
+BEFORE UPDATE ON categories
+FOR ROW EXECUTE PROCEDURE recalculate_carer_prices();
+------------------------------------------------ END ----------------------------------------------------------
