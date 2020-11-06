@@ -469,7 +469,18 @@ BEGIN
 FOR loopRow IN
   SELECT DISTINCT carer_name FROM takes_care tc WHERE tc.category_name = OLD.category_name
 LOOP
-  SELECT rating INTO carer_rating FROM carers WHERE carer_name = loopRow.carer_name;
+  SELECT AVG(review_rating) INTO carer_rating
+  FROM bids b
+  WHERE
+    b.carer_name = loopRow.carer_name AND
+    OLD.category_name = (
+      SELECT belongs
+      FROM pets p
+      WHERE
+        p.pname = b.pname AND
+        p.owner_name = b.owner_name
+  );
+
   UPDATE takes_care
   SET carer_price = CASE
     WHEN carer_rating IS NULL
