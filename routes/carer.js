@@ -2,6 +2,38 @@ const router = require('express').Router();
 const { authUser } = require('./verifyToken');
 const pool = require("../db");
 
+// get list of carers info
+// tested
+router.get("/", async (req, res) => {
+  try {
+    const allCarers = await pool.query(
+      `SELECT carer_name, rating, isfulltime, name,  phone, area FROM carers c, accounts a
+      WHERE c.carer_name = a.username;
+      `
+    );
+    res.status(200).json(allCarers.rows);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
+// get detail info of a carer by carer_name
+router.get("/:carer_name", async (req, res) => {
+  const { carer_name } = req.params;
+  try {
+      const result = await pool.query(
+        `SELECT carer_name, rating, isfulltime, name,  phone, area FROM carers c, accounts a
+        WHERE c.carer_name = a.username
+        AND c.carer_name = $1;
+        `, [carer_name]
+        );
+
+      res.status(200).json(result.rows[0]);
+  } catch (err) {
+      res.status(400).send(err.message);
+  }
+})
+
 // 1. filter carer by pet category jiaying
 router.get("/:category_name", async (req, res) => {
     try {
@@ -38,18 +70,7 @@ router.get("/price/:category_name", async (req, res) => {
     }
   });
 
-// get list of carers
-// tested
-router.get("/", async (req, res) => {
-  try {
-    const allCarers = await pool.query(
-      "SELECT * FROM carers"
-    );
-    res.json(allCarers.rows);
-  } catch (err) {
-    console.log(err.message);
-  }
-})
+
 
 //get all reviews for a carer sort by review_rating
 //tested
