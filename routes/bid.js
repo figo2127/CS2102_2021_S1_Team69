@@ -5,6 +5,7 @@ const pool = require("../db");
 // create bid
 router.post("/", async (req, res) => {
   try {
+    console.log(req.body);
     const {start_date, end_date, carer_name, owner_name, pname, bid_date, daily_price, is_successful, credit_card_num, payment_date, payment_mode, delivery_method, review_rating, review_content, review_date} = req.body;
     const createBid = await pool.query(`
       INSERT INTO bids VALUES

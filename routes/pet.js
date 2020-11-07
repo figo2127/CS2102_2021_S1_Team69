@@ -35,6 +35,19 @@ router.get("/", async (req, res) => {
   }
 });
 
+// get all pets from an owner of certain category
+router.get("/category/:owner_name/:category", async (req, res) => {
+  try {
+    const { owner_name, category} = req.params;
+    const pet = await pool.query("SELECT * FROM pets WHERE owner_name = $1 AND belongs = $2", [
+        owner_name, category
+    ]);
+    res.json(pet.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 // get all pets from an owner
 router.get("/:owner_name", async (req, res) => {
   try {
@@ -47,6 +60,7 @@ router.get("/:owner_name", async (req, res) => {
     console.error(err.message);
   }
 });
+
 
 // get a pet
 router.get("/:owner_name/:pname", async (req, res) => {
