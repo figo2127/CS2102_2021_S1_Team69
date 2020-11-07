@@ -35,7 +35,11 @@ router.get("/:carer_name", async (req, res) => {
 })
 
 // 1. filter carer by pet category jiaying
+<<<<<<< HEAD
 router.get("/category/:category_name", async (req, res) => {
+=======
+router.get("/:category_name", async (req, res) => {
+>>>>>>> d7003bff924da3802a3732c7a917420bb90f0b8a
     try {
       const { category_name } = req.params;
       const carer = await pool.query(`
@@ -56,15 +60,42 @@ router.get("/category/:category_name", async (req, res) => {
     }
   });
 
+router.get('/ifavailable/:carer_name/:start_date/:end_date', async (req, res) => {
+  try {
+    const {carer_name, start_date, end_date} = req.params;
+    const start_dateobj = new Date(start_date.substring(0, 4), parseInt(start_date.substring(5,7)) - 1, parseInt(start_date.substring(8,10)) + 1);
+    const end_dateobj = new Date(end_date.substring(0, 4), parseInt(end_date.substring(5,7)) -1 , parseInt(end_date.substring(8,10)) + 1);
+    const days = (end_dateobj.getTime() - start_dateobj.getTime()) / (1000 * 3600 * 24) + 1; 
+    const query = await pool.query(`
+      SELECT 1
+      FROM carers c
+      WHERE 
+        c.carer_name = $1
+      AND
+        (SELECT COUNT(*) FROM working_days w WHERE w.carer_name = c.carer_name AND w.number_of_pets < 5 AND w.working_date >= $2 AND w.working_date <= $3) = $4;
+    `, [carer_name, start_date, end_date, days]);
+    if (query.rows.length > 0) {
+      res.json({status : "success"});
+    } else {
+      res.json({status : "fail"});
+    }
+  } catch(err) {
+    console.log(err.message);
+  }
+});
 
 // 2. get list of carer, show their ($x) category price (sort) jiaying
 router.get("/price/:category_name", async (req, res) => {
     try {
       const { category_name } = req.params;
       const carer = await pool.query(`
-      SELECT takes_care.carer_name, takes_care.carer_price
-      FROM takes_care, categories
-      WHERE takes_care.category_name = categories.category_name
+      SELECT carers.carer_name, 
+      CASE WHEN carers.rating > 4 THEN categories.base_price * 1.2
+         WHEN carers.rating > 3 THEN categories.base_price * 1.1
+         ELSE categories.base_price
+         END AS price
+      FROM takes_care, categories, carers
+      WHERE takes_care.category_name = categories.category_name AND carers.carer_name = takes_care.carer_name
       AND takes_care.category_name = $1
       ORDER BY takes_care.carer_price;
       `, [

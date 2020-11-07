@@ -18,7 +18,9 @@ const registerValidation = data => {
         area: Joi.string()
             .min(3),
         address: Joi.string()
-            .min(6)
+            .min(6),
+        isFulltime: Joi.string()
+            .min(4)
     });
     return  schema.validate(data);
 };
