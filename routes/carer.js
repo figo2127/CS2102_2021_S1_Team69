@@ -17,6 +17,20 @@ router.get("/", async (req, res) => {
   }
 })
 
+router.get("/price/:carer_name/:category", async (req, res) => {
+  try {
+    const { carer_name, category } = req.params;
+    const price = await pool.query(
+      `SELECT carer_price FROM takes_care 
+      WHERE carer_name = $1 AND category_name = $2 ;
+      ` , [carer_name, category]
+    );
+    res.status(200).json(price.rows[0]);
+  } catch (err) {
+    console.log(err.message);
+  }
+})
+
 // get detail info of a carer by carer_name
 router.get("/:carer_name", async (req, res) => {
   const { carer_name } = req.params;
@@ -102,6 +116,23 @@ router.get("/price/:category_name", async (req, res) => {
       console.error(err.message);
     }
   });
+
+  // 2. get list of category and price that the carer can takes care of
+router.get("/category-list/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    const categoryList = await pool.query(`
+    SELECT *
+    FROM takes_care
+    WHERE takes_care.carer_name = $1
+    `, [
+      carer_name
+    ]);
+    res.json(categoryList.rows);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
 
 
 
