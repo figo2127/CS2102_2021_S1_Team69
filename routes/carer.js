@@ -35,11 +35,7 @@ router.get("/:carer_name", async (req, res) => {
 })
 
 // 1. filter carer by pet category jiaying
-<<<<<<< HEAD
 router.get("/category/:category_name", async (req, res) => {
-=======
-router.get("/:category_name", async (req, res) => {
->>>>>>> d7003bff924da3802a3732c7a917420bb90f0b8a
     try {
       const { category_name } = req.params;
       const carer = await pool.query(`
