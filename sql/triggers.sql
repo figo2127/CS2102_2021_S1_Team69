@@ -69,9 +69,9 @@ $$
 DECLARE bid_pet_category VARCHAR;
 DECLARE category_base_price NUMERIC;
 DECLARE category_avg_rating NUMERIC;
+DECLARE new_rating NUMERIC;
 
 BEGIN
-
 SELECT belongs INTO bid_pet_category
 FROM pets p
 WHERE
@@ -96,7 +96,9 @@ WHERE
 
 UPDATE carers SET rating = (
   SELECT (CASE
+    WHEN NEW.review_rating IS NULL THEN rating
     WHEN COUNT(*) = 0 THEN NEW.review_rating
+    WHEN OLD.review_rating IS NOT NULL THEN (SUM(review_rating) + NEW.review_rating - OLD.review_rating + 0.0) / COUNT(*)
     ELSE (SUM(review_rating) + NEW.review_rating + 0.0) / (COUNT(*) + 1)
   END)
   FROM bids b
