@@ -151,6 +151,7 @@ IF
 THEN
   RAISE EXCEPTION 'Carer does not take care of this category of pets!';
 END IF;
+RETURN NEW;
 END;
 $$
 LANGUAGE plpgsql;
@@ -208,7 +209,6 @@ IF
 THEN
   RETURN NEW;
 ELSE
-  UPDATE carers SET is_fulltime = false WHERE carer_name = NEW.carer_name;
   FOR loop_row IN
     SELECT generate_series(
       DATE(date_part('year', now()) || '-01-01'),
@@ -218,7 +218,6 @@ ELSE
   LOOP
     INSERT INTO working_days VALUES(loop_row.date, NEW.carer_name, 0);
   END LOOP;
-  UPDATE carers SET is_fulltime = true WHERE carer_name = NEW.carer_name;
 END IF;
 RETURN NEW;
 END;
@@ -304,6 +303,8 @@ THEN
       WHERE carer_name = NEW.carer_name AND working_date = loop_row.date
     ) < 5;
   END LOOP;
+ELSE
+  RETURN NEW;
 END IF;
 IF
   can_accept
