@@ -307,12 +307,14 @@ THEN
     SELECT *
     FROM bids
     WHERE
-    is_successful AND pname = NEW.pname AND owner_name = NEW.owner_name AND
-    (start_date >= NEW.start_date AND start_date <= NEW.end_date) OR
+    is_successful AND pname = NEW.pname AND owner_name = NEW.owner_name AND carer_name = NEW.carer_name AND
+    (start_date <> NEW.start_date OR end_date <> NEW.end_date) AND
+    ((start_date >= NEW.start_date AND start_date <= NEW.end_date) OR
     (end_date >= NEW.start_date AND end_date <= NEW.end_date) OR
     (NEW.start_date >= start_date AND NEW.start_date <= end_date) OR
-    (NEW.end_date >= start_date AND NEW.end_date <= end_date)
+    (NEW.end_date >= start_date AND NEW.end_date <= end_date))
   );
+  insert into test values (can_accept);
 ELSE
   RETURN NEW;
 END IF;
