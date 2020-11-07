@@ -199,6 +199,22 @@ router.get("/salary/:month/:year/:carer_name", async (req, res) => {
   }
 })
 
+router.get('/totalUsers', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT count(*)
+      FROM accounts a
+      WHERE a.username NOT IN (
+        SELECT admin_name
+        FROM admins
+      );
+      `);
+      res.json({count: result.rows[0]});
+  }catch(err) {
+    console.log(err.message);
+  }
+})
+
 //  get total monthly salary for xx month (assuming month is an integer [1, 12])
 // summary/salary/10/2020
 router.get("/totalsalary/:month/:year", async (req, res) => {
