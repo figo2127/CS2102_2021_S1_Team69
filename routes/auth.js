@@ -82,7 +82,7 @@ router.post("/register/owner", async (req, res) => {
             [username]
         );
         await client.query('COMMIT');
-        res.send(`Admin account with username ${username} has been created!`)
+        res.send(`Owner account with username ${username} has been created!`)
     } catch (err) {
         await client.query('ROLLBACK');
         return res.status(400).send(err.message);
@@ -125,7 +125,7 @@ router.post("/register/carer", async (req, res) => {
             [username, isFulltime === 'true']
         );
         await client.query('COMMIT');
-        res.send(`Admin account with username ${username} has been created!`)
+        res.send(`Carer account with username ${username} has been created!`);
     } catch (err) {
         await client.query('ROLLBACK');
         return res.status(400).send(err.message);
@@ -177,6 +177,38 @@ router.get('/authenticate/:token', async (req, res) => {
         res.json(result);
     } catch (err) {
         res.status(401).send('Token is invalid');
+    }
+});
+
+router.get('/add-account-type/:username/:accType', async (req, res) => {
+    try {
+        const { username, accType } = req.params;
+        if (accType === 'owner') {
+            await pool.query(
+                `Insert INTO owners VALUES ($1);`
+                , [username]
+            );
+        } else if (accType.includes('carer')) {
+            const isFulltime = accType.includes('full-time');
+            await pool.query(
+                `Insert INTO carers VALUES ($1, null, $2);`,
+                [username, isFulltime]
+            );
+        } else {
+            res.status(400).send('Invalid account type');
+            return;
+        }
+        const getUserType = await pool.query(`
+            SELECT
+                exists (select * from admins where admin_name = $1) as isAdmin,
+                exists (select * from carers where carer_name = $1) as isCarer,
+                exists (select * from owners where owner_name = $1) as isOwner
+            `, [username]
+        );
+        const userType = ["admin", "carer", "owner"].filter((type) => getUserType.rows[0][`is${type}`]);
+        res.json({ userType });
+    } catch (err) {
+        res.status(400).send(err.message);
     }
 });
 

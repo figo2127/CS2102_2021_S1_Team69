@@ -13,9 +13,9 @@ BEGIN
 IF
   (SELECT (is_fulltime OR rating >= 4.00) FROM carers WHERE carers.carer_name = NEW.carer_name)
 THEN
-  SELECT 5 INTO carer_limit;
+  carer_limit := 5;
 ELSE
-  SELECT 2 INTO carer_limit;
+  carer_limit := 2;
 END IF;
 
 IF
@@ -39,7 +39,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE TRIGGER bid_turns_success
-AFTER UPDATE OF is_successful ON bids
+BEFORE UPDATE OF is_successful ON bids
 FOR ROW EXECUTE PROCEDURE increment_working_day_pet();
 
 -- Function and trigger to ensure that carer_price in takes_care table will not be lower than the base price --
@@ -303,6 +303,17 @@ THEN
       WHERE carer_name = NEW.carer_name AND working_date = loop_row.date
     ) < 5;
   END LOOP;
+  can_accept := can_accept AND NOT EXISTS(
+    SELECT *
+    FROM bids
+    WHERE
+    is_successful AND pname = NEW.pname AND owner_name = NEW.owner_name AND carer_name = NEW.carer_name AND
+    (start_date <> NEW.start_date OR end_date <> NEW.end_date) AND
+    ((start_date >= NEW.start_date AND start_date <= NEW.end_date) OR
+    (end_date >= NEW.start_date AND end_date <= NEW.end_date) OR
+    (NEW.start_date >= start_date AND NEW.start_date <= end_date) OR
+    (NEW.end_date >= start_date AND NEW.end_date <= end_date))
+  );
 ELSE
   RETURN NEW;
 END IF;
