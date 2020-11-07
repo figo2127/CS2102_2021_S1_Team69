@@ -314,7 +314,6 @@ THEN
     (NEW.start_date >= start_date AND NEW.start_date <= end_date) OR
     (NEW.end_date >= start_date AND NEW.end_date <= end_date))
   );
-  insert into test values (can_accept);
 ELSE
   RETURN NEW;
 END IF;
