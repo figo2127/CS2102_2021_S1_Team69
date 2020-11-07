@@ -4,19 +4,15 @@ const pool = require("../db");
 const { authUser } = require('./verifyToken');
 
 //getOwnerInfo by owner name
-router.get('/:owner_name', authUser, async (req, res) => {
+router.get('/:owner_name', async (req, res) => {
     const { owner_name } = req.params;
     try {
         const result = await pool.query(
-            "SELECT * FROM owners WHERE owner_name = $1",
-            [owner_name]
+          `SELECT owner_name, name,  phone, area, address FROM owners o, accounts a
+          WHERE o.owner_name = a.username
+          AND o.owner_name = $1;`, [owner_name]
           );
-        const result2 = await pool.query(
-            "SELECT * FROM accounts WHERE username = $1",
-            [owner_name]
-          );
-        const combinedResult = result.rows[0].concat(result2.rows[0]);
-        res.status(200).json(combinedResult);
+          res.status(200).json(result.rows[0]);
     } catch (err) {
         res.status(400).send(err.message);
     }
@@ -27,17 +23,14 @@ router.get('/:owner_name', authUser, async (req, res) => {
 /**
  * Unchecked due to no owner table created yet
  */
-router.put("/owners/:owner_name", authUser, async (req, res) => {
+router.put("/:owner_name", async (req, res) => {
     try {
       const { owner_name } = req.params;
-      const { password, name, phone, area, address } = req.body;
-
-      const salt = await bcrypt.genSalt(10);
-      const hashPassword = await bcrypt.hash(password, salt);
+      const { phone, area, address } = req.body;
 
       const updateOwnerInfo = await pool.query(
-        "UPDATE accounts SET password = $2, name = $3, phone = $4, area = $5, address = $6 WHERE username = $7",
-        [hashPassword, name, phone, area, address, owner_name]
+        "UPDATE accounts SET phone = $1, area = $2, address = $3 WHERE username = $4",
+        [ phone, area, address, owner_name]
       );
       res.send("Owner info updated successfully")
     } catch (err) {
@@ -62,16 +55,6 @@ router.get("/reviews/:owner_name", authUser, async (req, res) => {
   }
 });
 
-// get all bids by owner name
-router.get("/bids/:owner_name", async (req, res) => {
-  try {
-    const { owner_name } = req.params;
-    const getBids = await pool.query(`SELECT * FROM bids WHERE owner_name = $1;`, [owner_name]);
-    res.json(getBids.rows);
-  } catch (err) {
-    console.log(err.message);
-  }
-})
 
 // get list of sucess bids by owner name 
 // router.post("/bids/:owner_name", async (req, res) => {

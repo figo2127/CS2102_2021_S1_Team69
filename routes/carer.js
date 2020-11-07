@@ -17,6 +17,7 @@ router.get("/", async (req, res) => {
   }
 })
 
+
 router.get("/price/:carer_name/:category", async (req, res) => {
   try {
     const { carer_name, category } = req.params;
@@ -36,7 +37,7 @@ router.get("/:carer_name", async (req, res) => {
   const { carer_name } = req.params;
   try {
       const result = await pool.query(
-        `SELECT carer_name, rating, is_fulltime, name,  phone, area FROM carers c, accounts a
+        `SELECT carer_name, rating, is_fulltime, name,  phone, area, address FROM carers c, accounts a
         WHERE c.carer_name = a.username
         AND c.carer_name = $1;
         `, [carer_name]
@@ -69,6 +70,44 @@ router.get("/category/:category_name", async (req, res) => {
       console.error(err.message);
     }
   });
+
+  //add a category for a carer
+  router.post("/category/:carer_name", async (req, res) => {
+    try {
+      const { carer_name } = req.params;
+      const { category_name, carer_price} = req.body;
+      const newTakesCare = await pool.query(`
+      INSERT INTO takes_care VALUES($1, $2, $3) RETURNING *`, [
+        carer_name, category_name, carer_price
+      ]);
+      res.json(newTakesCare.rows[0]);
+    } catch (err) {
+      console.error(err.message);
+    }
+  });
+
+  //add a new category
+//tested
+router.post("/add-category/:carer_name", async (req, res) => {
+  try{
+    const { category_name } = req.body;
+    const {  carer_name } = req.params;
+    const result = await pool.query(
+      "SELECT base_price FROM categories WHERE category_name = $1;", [category_name]
+    );
+    const basePrice = result.rows[0].base_price;
+    if(basePrice) {
+      const newTakesCare = await pool.query(
+        "INSERT INTO takes_care VALUES($1, $2, $3) RETURNING *",
+        [carer_name, category_name, basePrice]
+      );
+      res.json(newTakesCare.rows[0]);
+    }
+
+  } catch (err) {
+    console.error(err.message);
+  }
+})
 
 router.get('/ifavailable/:carer_name/:start_date/:end_date', async (req, res) => {
   try {
@@ -268,6 +307,26 @@ router.get("/petday-of-particular-month", authUser, async (req, res) => {
   } catch (err) {
     console.log("Error in getting carer's petday of particular month");
     console.error(err);
+  }
+})
+
+//update Owner Info
+/**
+ * Unchecked due to no owner table created yet
+ */
+router.put("/:carer_name", async (req, res) => {
+  try {
+    const { carer_name } = req.params;
+    console.log(req.body);
+    const { phone, area, address } = req.body;
+
+    const updateCarerInfo = await pool.query(
+      "UPDATE accounts SET phone = $1, area = $2, address = $3 WHERE username = $4",
+      [phone, area, address, carer_name]
+    );
+    res.send("carer info updated successfully")
+  } catch (err) {
+    console.error(err.message);
   }
 })
 
