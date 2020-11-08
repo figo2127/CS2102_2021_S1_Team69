@@ -209,7 +209,7 @@ router.get('/totalUsers', async (req, res) => {
         FROM admins
       );
       `);
-      res.json({count: result.rows[0]});
+      res.json(result.rows[0]);
   }catch(err) {
     console.log(err.message);
   }
